@@ -196,6 +196,18 @@
         <input class="fi" id="reg-name" type="text" placeholder="실명 *">
         <input class="fi" id="reg-nick" type="text" placeholder="별명 (닉네임) *">
         <input class="fi" id="reg-phone" type="tel" placeholder="연락처 (선택)">
+        <div style="display:flex;gap:8px">
+          <label style="flex:1;border:2px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all 0.2s" id="role-dad-label">
+            <input type="radio" name="reg-role" id="role-dad" value="dad" checked style="display:none">
+            <div style="font-size:20px">👨</div>
+            <div style="font-weight:700;font-size:13px">아빠</div>
+          </label>
+          <label style="flex:1;border:2px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all 0.2s" id="role-mom-label">
+            <input type="radio" name="reg-role" id="role-mom" value="mom" style="display:none">
+            <div style="font-size:20px">👩</div>
+            <div style="font-weight:700;font-size:13px">엄마</div>
+          </label>
+        </div>
         <button class="btn-primary" onclick="doRegister()">가입하기</button>
       </div>
     </div>
@@ -212,6 +224,7 @@
       </div>
     </div>
     <div id="auth-msg"></div>
+
   </div>
 </div>
 
@@ -265,6 +278,7 @@
       <!-- 기본 정보 탭 -->
       <div class="trip-tab-content active" id="ttab-info">
         <div id="trip-attend-section"></div>
+        <div id="trip-supply-section"></div>
       </div>
 
       <!-- 앨범 탭 -->
@@ -375,6 +389,18 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+// 역할 선택 라디오 스타일
+document.addEventListener('change', e => {
+  if (e.target.name === 'reg-role') {
+    document.getElementById('role-dad-label').style.cssText = e.target.value==='dad'
+      ? 'flex:1;border:2px solid var(--primary);border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:#FFF3ED'
+      : 'flex:1;border:2px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer';
+    document.getElementById('role-mom-label').style.cssText = e.target.value==='mom'
+      ? 'flex:1;border:2px solid var(--primary);border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:#FFF3ED'
+      : 'flex:1;border:2px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer';
+  }
+});
+
 window.switchAuth = (tab) => {
   document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (tab==='login'&&i===0)||(tab==='register'&&i===1)));
   document.getElementById('login-form').style.display = tab==='login'?'':'none';
@@ -410,13 +436,14 @@ window.doRegister = async () => {
   const email=document.getElementById('reg-email').value.trim(), pw=document.getElementById('reg-pw').value;
   const name=document.getElementById('reg-name').value.trim(), nick=document.getElementById('reg-nick').value.trim();
   const phone=document.getElementById('reg-phone').value.trim();
+  const role=document.querySelector('input[name="reg-role"]:checked')?.value||'dad';
   if (!email||!pw||!name||!nick) return showAuthMsg('필수 항목을 모두 입력해주세요.','err');
   if (pw.length<6) return showAuthMsg('비밀번호는 6자 이상이어야 합니다.','err');
   try {
     const firstSnap = await getDocs(query(collection(db,'users'),limit(1)));
     const isFirst = firstSnap.empty;
     const cred = await createUserWithEmailAndPassword(auth, email, pw);
-    await setDoc(doc(db,'users',cred.user.uid), { email, realname:name, nick, phone, isAdmin:isFirst, active:true, children:[], createdAt:serverTimestamp() });
+    await setDoc(doc(db,'users',cred.user.uid), { email, realname:name, nick, phone, role, isAdmin:isFirst, active:true, children:[], createdAt:serverTimestamp() });
   } catch(e) {
     const m={'auth/email-already-in-use':'이미 사용 중인 이메일입니다.','auth/invalid-email':'올바른 이메일 형식이 아닙니다.','auth/weak-password':'비밀번호가 너무 약합니다.'};
     showAuthMsg(m[e.code]||'가입 실패: '+e.message,'err');
@@ -448,9 +475,15 @@ function showAuth() { document.getElementById('auth-overlay').style.display='fle
 function showApp() {
   document.getElementById('auth-overlay').style.display='none';
   document.getElementById('app').style.display='block';
-  document.getElementById('header-user').textContent=(currentUserDoc.nick||'')+' 님';
-  if (currentUserDoc.isAdmin) {
+  const isMom = currentUserDoc.role === 'mom';
+  const isAdmin = currentUserDoc.isAdmin;
+  document.getElementById('header-user').textContent = (isMom ? '👩 ' : '👨 ') + (currentUserDoc.nick||'') + ' 님';
+  if (isAdmin) {
     ['nav-admin','notice-add-btn','trip-add-btn','vote-add-btn'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display=''; });
+  }
+  // 엄마: 정산 탭 숨김
+  if (isMom) {
+    document.querySelector('.trip-tab[onclick*="settle"]')?.remove();
   }
   startListeners();
   goPage('home');
@@ -573,7 +606,7 @@ function renderTrips() {
         <div>
           <span class="badge ${t.status==='planned'?'b-bl':'b-gy'}">${t.status==='planned'?'예정':'완료'}</span>
           <div class="card-title" style="margin-top:6px">${esc(t.title)}</div>
-          <div class="card-sub">📍 ${esc(t.location||'-')}</div>
+          <div class="card-sub">📍 ${esc(t.location||'-')} ${t.naverMapUrl?`<a href="${esc(t.naverMapUrl)}" target="_blank" rel="noopener" style="color:var(--primary);font-size:11px;text-decoration:none">🗺️ 지도</a>`:''}</div>
           <div class="card-sub">📅 ${t.dateStart||''}${t.dateEnd&&t.dateEnd!==t.dateStart?' ~ '+t.dateEnd:''}</div>
         </div>
         <span style="font-size:28px">🚗</span>
@@ -598,7 +631,7 @@ window.showTripDetail = async (tripId) => {
           <span class="badge ${trip.status==='planned'?'b-bl':'b-gy'}">${trip.status==='planned'?'예정':'완료'}</span>
           <h2 style="margin-top:8px;font-size:20px;font-weight:800">${esc(trip.title)}</h2>
           <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
-            <div>📍 <strong>${esc(trip.location||'-')}</strong></div>
+            <div>📍 <strong>${esc(trip.location||'-')}</strong> ${trip.naverMapUrl?`<a href="${esc(trip.naverMapUrl)}" target="_blank" rel="noopener" style="color:var(--primary);font-size:13px;text-decoration:none;margin-left:4px">🗺️ 네이버 지도</a>`:''}</div>
             <div>📅 ${trip.dateStart||''}${trip.dateEnd&&trip.dateEnd!==trip.dateStart?' ~ '+trip.dateEnd:''}</div>
             ${trip.description?`<div style="margin-top:6px;color:#555;line-height:1.6;white-space:pre-wrap;font-size:14px">${esc(trip.description)}</div>`:''}
           </div>
@@ -610,11 +643,16 @@ window.showTripDetail = async (tripId) => {
       </div>
     </div>`;
 
+  // 엄마는 정산 탭 숨김
+  const settleTabBtn = document.querySelector('.trip-tab[onclick*="settle"]');
+  if (settleTabBtn) settleTabBtn.style.display = currentUserDoc.role==='mom' ? 'none' : '';
+
   // 첫 탭으로 초기화
   switchTripTab('info', document.querySelector('.trip-tab'));
 
-  // 기본정보(참석) 탭 로드
+  // 기본정보(참석+준비물) 탭 로드
   loadAttendance(tripId);
+  loadSupplies(tripId);
 
   // 앨범 탭 초기화 (탭 클릭 시 로드)
   document.getElementById('album-list').innerHTML = '';
@@ -658,6 +696,78 @@ async function loadAttendance(tripId) {
       </div>`;
   } catch(e) { attSection.innerHTML=`<div class="card"><div class="card-sub">오류: ${e.message}</div></div>`; }
 }
+
+// ---- 준비물 ----
+async function loadSupplies(tripId) {
+  const section = document.getElementById('trip-supply-section');
+  if (!section) return;
+  const isMom = currentUserDoc.role === 'mom';
+  try {
+    const snap = await getDocs(query(collection(db,'trips',tripId,'supplies'), orderBy('createdAt','asc')));
+    const supplies = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+    section.innerHTML = `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-weight:700">🎒 준비물</div>
+          ${!isMom?`<button class="btn btn-or btn-sm" onclick="openSupplyModal('${tripId}')">+ 추가</button>`:''}
+        </div>
+        ${!supplies.length
+          ? `<div class="card-sub">등록된 준비물이 없습니다.</div>`
+          : supplies.map(s => {
+              const assignees = s.assignees?.map(uid => allUsers[uid]?.nick||uid).join(', ') || '미지정';
+              const isDone = s.done || false;
+              return `
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F5F5F5">
+                ${!isMom?`<input type="checkbox" ${isDone?'checked':''} onchange="toggleSupplyDone('${tripId}','${s.id}',this.checked)" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer">`:
+                  `<span style="font-size:16px">${isDone?'✅':'⬜'}</span>`}
+                <div style="flex:1">
+                  <span style="font-weight:600;font-size:14px;${isDone?'text-decoration:line-through;color:var(--sub)':''}">${esc(s.item)}</span>
+                  <div style="font-size:12px;color:var(--sub)">담당: <strong>${esc(assignees)}</strong> ${s.note?'· '+esc(s.note):''}</div>
+                </div>
+                ${!isMom&&(currentUserDoc.isAdmin||s.addedBy===currentUser.uid)?`<button class="btn btn-gray btn-sm" onclick="deleteSupply('${tripId}','${s.id}')">삭제</button>`:''}
+              </div>`;
+            }).join('')}
+      </div>`;
+  } catch(e) { if(section) section.innerHTML=''; }
+}
+
+window.openSupplyModal = (tripId) => {
+  const userOpts = Object.entries(allUsers).map(([uid,u]) =>
+    `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
+      <input type="checkbox" class="sup-chk" value="${uid}">
+      <span>${esc(u.nick)}</span><span style="color:var(--sub);font-size:12px">${esc(u.realname)}</span>
+    </label>`).join('');
+  openModal(`
+    <div class="modal-hd"><span class="modal-title">🎒 준비물 추가</span><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="fg"><label class="fl">준비물 이름 *</label><input class="fi" id="m-sitem" placeholder="예: 텐트, 돗자리, 구급약"></div>
+    <div class="fg"><label class="fl">메모</label><input class="fi" id="m-snote" placeholder="예: 2인용, 큰 사이즈"></div>
+    <div class="fg"><label class="fl">담당자 (선택)</label>
+      <div style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 8px">${userOpts}</div>
+    </div>
+    <button class="btn btn-or" style="width:100%" onclick="saveSupply('${tripId}')">추가</button>`);
+};
+
+window.saveSupply = async (tripId) => {
+  const item = document.getElementById('m-sitem').value.trim();
+  const note = document.getElementById('m-snote').value.trim();
+  const assignees = [...document.querySelectorAll('.sup-chk:checked')].map(c=>c.value);
+  if (!item) return alert('준비물 이름을 입력해주세요.');
+  await addDoc(collection(db,'trips',tripId,'supplies'), { item, note, assignees, done:false, addedBy:currentUser.uid, createdAt:serverTimestamp() });
+  closeModal();
+  loadSupplies(tripId);
+};
+
+window.toggleSupplyDone = async (tripId, supId, done) => {
+  await updateDoc(doc(db,'trips',tripId,'supplies',supId), { done });
+  loadSupplies(tripId);
+};
+
+window.deleteSupply = async (tripId, supId) => {
+  if (!confirm('삭제하시겠습니까?')) return;
+  await deleteDoc(doc(db,'trips',tripId,'supplies',supId));
+  loadSupplies(tripId);
+};
 
 window.setAttendance = async (tripId, attending) => {
   await setDoc(doc(db,'trips',tripId,'attendees',currentUser.uid), {uid:currentUser.uid,attending,updatedAt:serverTimestamp()},{merge:true});
@@ -1044,6 +1154,7 @@ window.openTripModal = (id='') => {
     <div class="fg"><label class="fl">시작일 *</label><input class="fi" id="m-tstart" type="date" value="${t?.dateStart||''}"></div>
     <div class="fg"><label class="fl">종료일</label><input class="fi" id="m-tend" type="date" value="${t?.dateEnd||''}"></div>
     <div class="fg"><label class="fl">장소</label><input class="fi" id="m-tloc" value="${esc(t?.location||'')}"></div>
+    <div class="fg"><label class="fl">네이버 지도 링크 (선택)</label><input class="fi" id="m-tmap" type="url" value="${esc(t?.naverMapUrl||'')}" placeholder="https://map.naver.com/..."></div>
     <div class="fg"><label class="fl">설명</label><textarea class="fi" id="m-tdesc" rows="3">${esc(t?.description||'')}</textarea></div>
     <div class="fg"><label class="fl">상태</label><select class="fi" id="m-tstatus"><option value="planned" ${t?.status!=='completed'?'selected':''}>예정</option><option value="completed" ${t?.status==='completed'?'selected':''}>완료</option></select></div>
     <button class="btn btn-or" style="width:100%" onclick="saveTrip('${id}')">저장</button>`);
@@ -1052,9 +1163,10 @@ window.openTripModal = (id='') => {
 window.saveTrip = async (id) => {
   const title=document.getElementById('m-ttitle').value.trim(), dateStart=document.getElementById('m-tstart').value;
   const dateEnd=document.getElementById('m-tend').value, location=document.getElementById('m-tloc').value.trim();
+  const naverMapUrl=document.getElementById('m-tmap').value.trim();
   const description=document.getElementById('m-tdesc').value.trim(), status=document.getElementById('m-tstatus').value;
   if (!title||!dateStart) return alert('제목과 시작일은 필수입니다.');
-  const data={title,dateStart,dateEnd,location,description,status};
+  const data={title,dateStart,dateEnd,location,naverMapUrl,description,status};
   if (id) await updateDoc(doc(db,'trips',id),data);
   else await addDoc(collection(db,'trips'),{...data,createdBy:currentUser.uid,createdAt:serverTimestamp()});
   closeModal();
@@ -1339,8 +1451,16 @@ async function renderAdminMembers() {
           ${u.children?.length?`<div style="margin-top:6px">${u.children.map(c=>`<span class="child-chip">👶 ${esc(c.name)}</span>`).join('')}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-          ${u.isAdmin?'<span class="badge b-or">관리자</span>':''}
-          ${u.id!==currentUser.uid?`<button class="btn btn-sm ${u.isAdmin?'btn-gray':'btn-out'}" onclick="toggleAdmin('${u.id}',${u.isAdmin})">${u.isAdmin?'관리자 해제':'관리자 승격'}</button>`:'<span class="badge b-gy">나</span>'}
+          <div style="display:flex;gap:4px">
+            <span class="badge ${u.role==='mom'?'b-or':'b-bl'}">${u.role==='mom'?'👩 엄마':'👨 아빠'}</span>
+            ${u.isAdmin?'<span class="badge b-or">관리자</span>':''}
+          </div>
+          ${u.id!==currentUser.uid?`
+            <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+              <button class="btn btn-sm ${u.isAdmin?'btn-gray':'btn-out'}" onclick="toggleAdmin('${u.id}',${u.isAdmin})">${u.isAdmin?'관리자 해제':'관리자 승격'}</button>
+              <button class="btn btn-sm btn-gray" onclick="toggleRole('${u.id}','${u.role||'dad'}')">${u.role==='mom'?'👨 아빠로 변경':'👩 엄마로 변경'}</button>
+            </div>
+          `:'<span class="badge b-gy">나</span>'}
         </div>
       </div>
     </div>`).join('');
@@ -1352,6 +1472,15 @@ window.toggleSettleDetail = (uid) => {
 };
 
 window.toggleAdmin=async(uid,isAdmin)=>{ if(!confirm(isAdmin?'관리자를 해제하시겠습니까?':'관리자로 승격하시겠습니까?')) return; await updateDoc(doc(db,'users',uid),{isAdmin:!isAdmin}); allUsers[uid]={...allUsers[uid],isAdmin:!isAdmin}; renderAdminMembers(); };
+
+window.toggleRole=async(uid,currentRole)=>{
+  const newRole = currentRole==='mom'?'dad':'mom';
+  const label = newRole==='mom'?'엄마':'아빠';
+  if(!confirm(`${label}로 변경하시겠습니까?`)) return;
+  await updateDoc(doc(db,'users',uid),{role:newRole});
+  allUsers[uid]={...allUsers[uid],role:newRole};
+  renderAdminMembers();
+};
 
 // ========== MODAL ==========
 function openModal(html) { document.getElementById('modal-container').innerHTML=`<div class="modal-overlay" onclick="handleOverlay(event)"><div class="modal-box">${html}</div></div>`; }
