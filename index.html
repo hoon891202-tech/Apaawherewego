@@ -501,8 +501,15 @@ window.goPage = (page) => {
 
 function startListeners() {
   if (unsubNotices) unsubNotices();
-  unsubNotices = onSnapshot(query(collection(db,'notices'),orderBy('pinned','desc'),orderBy('createdAt','desc')), snap=>{
-    allNotices=snap.docs.map(d=>({id:d.id,...d.data()})); renderNotices();
+  unsubNotices = onSnapshot(query(collection(db,'notices'),orderBy('createdAt','desc')), snap=>{
+    allNotices = snap.docs.map(d=>({id:d.id,...d.data()}));
+    // 고정글 우선, 그 다음 최신순
+    allNotices.sort((a,b) => {
+      if (!!b.pinned !== !!a.pinned) return (b.pinned?1:0)-(a.pinned?1:0);
+      const at = a.createdAt?.toMillis?.()??0, bt = b.createdAt?.toMillis?.()??0;
+      return bt - at;
+    });
+    renderNotices();
   }, err=>console.error('notices:',err));
 
   if (unsubTrips) unsubTrips();
