@@ -897,8 +897,14 @@ async function loadExpenses(tripId) {
   expList.innerHTML='<div class="card-sub" style="padding:10px">로딩 중...</div>';
   summary.innerHTML='';
   try {
-    const snap = await getDocs(collection(db,'trips',tripId,'expenses'));
-    const expenses = snap.docs.map(d=>({id:d.id,...d.data()}));
+    const [expSnap, recSnap] = await Promise.all([
+      getDocs(collection(db,'trips',tripId,'expenses')),
+      getDocs(collection(db,'trips',tripId,'settleRecords'))
+    ]);
+    const expenses = expSnap.docs.map(d=>({id:d.id,...d.data()}));
+    // 완료된 정산: key = "fromUid_toUid"
+    const completedMap = {};
+    recSnap.docs.forEach(d=>{ const r=d.data(); completedMap[`${r.fromUid}_${r.toUid}`]={id:d.id,...r}; });
     const adm = currentUserDoc?.isAdmin;
 
     if (!expenses.length) { expList.innerHTML=`<div class="empty"><div class="empty-icon">💰</div>등록된 경비가 없습니다.<br><span style="font-size:13px">위 "+ 경비 추가" 버튼으로 추가해주세요.</span></div>`; return; }
@@ -988,32 +994,69 @@ async function loadExpenses(tripId) {
         </div>
       </div>
 
-      <div class="final-settle-card">
-        <div class="final-settle-header">
-          <div style="font-weight:800;font-size:16px;margin-bottom:2px">💸 최종 정산</div>
-          <div style="font-size:12px;opacity:0.85">아래 금액을 이체하면 정산 완료!</div>
-        </div>
-        <div class="final-settle-body">
-          ${!transactions.length
-            ? '<div style="text-align:center;padding:16px;color:var(--sub);font-size:13px">정산할 내역이 없습니다 🎉</div>'
-            : transactions.map(t => {
-                const toUser = allUsers[t.to]||{};
-                const hasAccount = toUser.bankName || toUser.accountNum;
-                return `
-                <div class="transfer-row">
-                  <span class="transfer-from">${esc(allUsers[t.from]?.nick||t.from)}</span>
-                  <span style="color:var(--sub);font-size:18px">→</span>
-                  <span class="transfer-to">${esc(toUser.nick||t.to)}</span>
-                  <span class="transfer-amt">${won(t.amount)}</span>
-                  ${hasAccount?`<div class="account-box" style="width:100%">
-                    🏦 <strong>${esc(toUser.bankName||'')}</strong>
-                    ${toUser.accountNum?`<span style="font-family:monospace;letter-spacing:1px"> ${esc(toUser.accountNum)}</span>`:''}
-                    ${toUser.accountHolder?`· <strong>${esc(toUser.accountHolder)}</strong>`:''}
-                  </div>`:'<div style="font-size:11px;color:#CCC;width:100%">계좌 정보 없음 (마이페이지에서 등록)</div>'}
-                </div>`;
-              }).join('')}
-        </div>
-      </div>
+      ${(() => {
+        const remaining = transactions.filter(t => !completedMap[`${t.from}_${t.to}`]);
+        const completed = transactions.filter(t => completedMap[`${t.from}_${t.to}`]);
+        const remainAmt = remaining.reduce((s,t)=>s+t.amount,0);
+        const completedAmt = completed.reduce((s,t)=>s+t.amount,0);
+        return `
+        <div class="final-settle-card">
+          <div class="final-settle-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-weight:800;font-size:16px;margin-bottom:2px">💸 최종 정산</div>
+              <div style="font-size:12px;opacity:0.85">완료 버튼을 누르면 정산 완료 처리됩니다</div>
+            </div>
+            <div style="text-align:right">
+              ${completedAmt>0?`<div style="font-size:11px;opacity:0.8">완료 ${won(completedAmt)}</div>`:''}
+              <div style="font-size:15px;font-weight:800">잔여 ${won(remainAmt)}</div>
+            </div>
+          </div>
+          <div class="final-settle-body">
+            ${!transactions.length
+              ? '<div style="text-align:center;padding:16px;color:var(--sub);font-size:13px">정산할 내역이 없습니다 🎉</div>'
+              : `
+              ${remaining.length ? `
+                <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">미완료 (${remaining.length}건)</div>
+                ${remaining.map(t => {
+                  const toUser = allUsers[t.to]||{};
+                  const key = `${t.from}_${t.to}`;
+                  const canComplete = t.from===currentUser.uid || t.to===currentUser.uid || currentUserDoc.isAdmin;
+                  return `
+                  <div class="transfer-row">
+                    <span class="transfer-from">${esc(allUsers[t.from]?.nick||t.from)}</span>
+                    <span style="color:var(--sub);font-size:18px">→</span>
+                    <span class="transfer-to">${esc(toUser.nick||t.to)}</span>
+                    <span class="transfer-amt">${won(t.amount)}</span>
+                    ${canComplete?`<button class="btn btn-green btn-sm" onclick="markSettleDone('${tripId}','${t.from}','${t.to}',${t.amount})">✓ 완료</button>`:''}
+                    ${toUser.bankName||toUser.accountNum?`<div class="account-box" style="width:100%">
+                      🏦 <strong>${esc(toUser.bankName||'')}</strong>
+                      ${toUser.accountNum?`<span style="font-family:monospace;letter-spacing:1px"> ${esc(toUser.accountNum)}</span>`:''}
+                      ${toUser.accountHolder?`· <strong>${esc(toUser.accountHolder)}</strong>`:''}
+                    </div>`:'<div style="font-size:11px;color:#CCC;width:100%">계좌 정보 없음</div>'}
+                  </div>`;
+                }).join('')}
+              `:''}
+              ${completed.length ? `
+                <div style="font-size:12px;font-weight:700;color:#16A34A;margin:12px 0 8px">✅ 완료된 정산 (${completed.length}건)</div>
+                ${completed.map(t => {
+                  const toUser = allUsers[t.to]||{};
+                  const rec = completedMap[`${t.from}_${t.to}`];
+                  const canUndo = currentUserDoc.isAdmin;
+                  return `
+                  <div class="transfer-row" style="opacity:0.5">
+                    <span class="transfer-from" style="background:#E5E5E5;color:#888">${esc(allUsers[t.from]?.nick||t.from)}</span>
+                    <span style="color:#CCC;font-size:18px">→</span>
+                    <span class="transfer-to" style="background:#E5E5E5;color:#888">${esc(toUser.nick||t.to)}</span>
+                    <span style="font-size:14px;font-weight:700;color:#888;text-decoration:line-through">${won(t.amount)}</span>
+                    <span class="badge b-gr">✅ 완료</span>
+                    ${canUndo?`<button class="btn btn-gray btn-sm" onclick="undoSettleDone('${tripId}','${rec.id}')">취소</button>`:''}
+                  </div>`;
+                }).join('')}
+              `:''}
+              `}
+          </div>
+        </div>`;
+      })()}
 
       <div class="card">
         <div style="font-weight:800;font-size:15px;margin-bottom:12px">👤 인원별 상세 내역</div>
@@ -1137,6 +1180,20 @@ window.saveExpense = async (tripId) => {
   if (!participants.length) return alert('참여 인원을 1명 이상 선택해주세요.');
   await addDoc(collection(db,'trips',tripId,'expenses'), { category, title, amount, memo, paidBy, participants, addedBy:currentUser.uid, createdAt:serverTimestamp() });
   closeModal();
+  loadExpenses(tripId);
+};
+
+window.markSettleDone = async (tripId, fromUid, toUid, amount) => {
+  if (!confirm(`${allUsers[fromUid]?.nick||fromUid} → ${allUsers[toUid]?.nick||toUid} 정산을 완료 처리하시겠습니까?`)) return;
+  await addDoc(collection(db,'trips',tripId,'settleRecords'), {
+    fromUid, toUid, amount, markedBy:currentUser.uid, completedAt:serverTimestamp()
+  });
+  loadExpenses(tripId);
+};
+
+window.undoSettleDone = async (tripId, recId) => {
+  if (!confirm('완료를 취소하시겠습니까?')) return;
+  await deleteDoc(doc(db,'trips',tripId,'settleRecords',recId));
   loadExpenses(tripId);
 };
 
