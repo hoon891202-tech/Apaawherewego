@@ -4,30 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>아빠 어디가</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --primary: #FF6B35;
-      --primary-dark: #E55A25;
-      --bg: #FFF8F2;
-      --card: #FFFFFF;
-      --text: #2D2D2D;
-      --sub: #888;
-      --border: #FFE0CC;
-      --shadow: 0 2px 12px rgba(255,107,53,0.1);
+      --primary: #FF6B35; --primary-dark: #E55A25;
+      --bg: #FFF8F2; --text: #2D2D2D; --sub: #888;
+      --border: #FFE0CC; --shadow: 0 2px 12px rgba(255,107,53,0.1);
     }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    /* ======== AUTH ======== */
-    #auth-overlay {
-      position: fixed; inset: 0;
-      background: linear-gradient(135deg, #FF6B35 0%, #FF9A5A 60%, #FFB347 100%);
-      display: flex; align-items: center; justify-content: center; z-index: 1000;
-    }
-    .auth-box {
-      background: white; border-radius: 24px; padding: 32px 28px;
-      width: 90%; max-width: 380px; box-shadow: 0 24px 60px rgba(0,0,0,0.2);
-    }
+    /* AUTH */
+    #auth-overlay { position: fixed; inset: 0; background: linear-gradient(135deg,#FF6B35,#FF9A5A 60%,#FFB347); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .auth-box { background: white; border-radius: 24px; padding: 32px 28px; width: 90%; max-width: 380px; box-shadow: 0 24px 60px rgba(0,0,0,0.2); }
     .auth-logo { text-align: center; margin-bottom: 24px; }
     .auth-logo h1 { font-size: 28px; color: var(--primary); font-weight: 800; }
     .auth-logo p { color: var(--sub); font-size: 14px; margin-top: 4px; }
@@ -35,7 +24,7 @@
     .auth-tab { flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 10px; background: white; cursor: pointer; font-weight: 600; color: var(--sub); font-size: 14px; }
     .auth-tab.active { background: var(--primary); border-color: var(--primary); color: white; }
     .auth-form { display: flex; flex-direction: column; gap: 10px; }
-    .fi { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; transition: border 0.2s; }
+    .fi { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; transition: border 0.2s; background: white; }
     .fi:focus { border-color: var(--primary); }
     .btn-primary { width: 100%; padding: 13px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 2px; }
     .btn-primary:hover { background: var(--primary-dark); }
@@ -47,23 +36,14 @@
     .auth-msg.err { background: #FFE5E5; color: #C00; }
     .auth-msg.ok { background: #E5F7E5; color: #080; }
 
-    /* ======== APP ======== */
+    /* APP */
     #app { display: none; padding-bottom: 72px; min-height: 100vh; }
-    .app-header {
-      position: sticky; top: 0; z-index: 100;
-      background: white; border-bottom: 1px solid var(--border);
-      padding: 13px 16px; display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(255,107,53,0.08);
-    }
+    .app-header { position: sticky; top: 0; z-index: 100; background: white; border-bottom: 1px solid var(--border); padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(255,107,53,0.08); }
     .app-header h2 { font-size: 18px; font-weight: 800; color: var(--primary); }
     #header-user { font-size: 13px; color: var(--sub); cursor: pointer; }
 
     /* Bottom Nav */
-    .bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-      background: white; border-top: 1px solid var(--border);
-      display: flex; box-shadow: 0 -2px 12px rgba(0,0,0,0.07);
-    }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: white; border-top: 1px solid var(--border); display: flex; box-shadow: 0 -2px 12px rgba(0,0,0,0.07); }
     .nav-item { flex: 1; padding: 9px 4px 7px; text-align: center; cursor: pointer; color: #BBB; transition: color 0.2s; }
     .nav-item.active { color: var(--primary); }
     .nav-icon { font-size: 22px; display: block; }
@@ -89,23 +69,21 @@
     .btn-gray:hover { background: #DDD; }
     .btn-red { background: #FF4444; color: white; }
     .btn-red:hover { background: #D00; }
-    .btn-green { background: #22C55E; color: white; }
 
-    /* Section header */
+    /* Misc */
     .sec-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .sec-title { font-size: 18px; font-weight: 800; }
-
-    /* Tabs */
     .tabs { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 2px; }
     .tab { padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; border: 2px solid var(--border); background: white; color: var(--sub); }
     .tab.active { background: var(--primary); border-color: var(--primary); color: white; }
-
-    /* Badge */
     .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
     .b-or { background: #FFE8DC; color: var(--primary); }
     .b-bl { background: #DBEAFE; color: #2563EB; }
     .b-gr { background: #DCFCE7; color: #16A34A; }
     .b-gy { background: #F3F4F6; color: #6B7280; }
+    .divider { height: 1px; background: var(--border); margin: 14px 0; }
+    .empty { text-align: center; padding: 40px 20px; color: var(--sub); }
+    .empty-icon { font-size: 40px; margin-bottom: 8px; }
 
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
@@ -113,64 +91,92 @@
     .modal-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .modal-title { font-size: 17px; font-weight: 800; }
     .modal-close { background: #F3F4F6; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px; line-height: 30px; }
-
-    /* Form */
     .fg { margin-bottom: 13px; }
     .fl { font-size: 13px; font-weight: 600; margin-bottom: 5px; display: block; color: var(--sub); }
-    select.fi, textarea.fi { background: white; }
     textarea.fi { resize: vertical; min-height: 80px; }
-
-    /* Divider */
-    .divider { height: 1px; background: var(--border); margin: 14px 0; }
-
-    /* Empty */
-    .empty { text-align: center; padding: 40px 20px; color: var(--sub); }
-    .empty-icon { font-size: 40px; margin-bottom: 8px; }
+    select.fi { background: white; }
 
     /* Notice */
     .notice-type { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
     .nt-notice { background: #E3F2FD; color: #1565C0; }
     .nt-rule { background: #FFF3E0; color: #E65100; }
 
-    /* Trip detail */
+    /* Trip Detail */
     #trip-detail { display: none; }
     .back-btn { display: flex; align-items: center; gap: 6px; color: var(--primary); font-weight: 700; cursor: pointer; margin-bottom: 16px; font-size: 15px; background: none; border: none; padding: 0; }
+    .trip-tabs { display: flex; gap: 0; margin-bottom: 16px; border: 2px solid var(--primary); border-radius: 12px; overflow: hidden; }
+    .trip-tab { flex: 1; padding: 9px 4px; text-align: center; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--primary); background: white; border: none; transition: all 0.2s; }
+    .trip-tab.active { background: var(--primary); color: white; }
+    .trip-tab-content { display: none; }
+    .trip-tab-content.active { display: block; }
 
-    /* Attendance buttons */
+    /* Attendance */
     .att-btn { padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; }
     .att-yes { background: #DCFCE7; color: #16A34A; }
     .att-yes.on { background: #16A34A; color: white; }
     .att-no { background: #FEE2E2; color: #DC2626; }
     .att-no.on { background: #DC2626; color: white; }
 
-    /* Expense */
-    .exp-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
-    .settle-row { display: flex; justify-content: space-between; padding: 7px 0; }
+    /* Album */
+    .album-item { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 12px; background: white; }
+    .album-item-header { padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .album-item-photo { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+    .album-item-footer { padding: 10px 12px; border-top: 1px solid var(--border); background: #FAFAFA; }
+    .comment-list { padding: 8px 12px; }
+    .comment-row { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid #F5F5F5; }
+    .comment-nick { font-size: 12px; font-weight: 700; color: var(--primary); min-width: 50px; }
+    .comment-text { font-size: 13px; flex: 1; }
+    .comment-time { font-size: 11px; color: #CCC; white-space: nowrap; }
+    .comment-input-row { display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border); }
+    .comment-input { flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; }
+    .comment-input:focus { border-color: var(--primary); }
 
-    /* Vote bar */
+    /* Expense / Settlement */
+    .exp-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .settle-row { display: flex; justify-content: space-between; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; }
+    .settle-me { background: #FFF3ED; }
+    .cat-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-right: 4px; }
+    .cat-식대 { background: #FFF3E0; color: #E65100; }
+    .cat-숙소비 { background: #E8F5E9; color: #2E7D32; }
+    .cat-이용료 { background: #E3F2FD; color: #1565C0; }
+    .cat-교통비 { background: #F3E5F5; color: #6A1B9A; }
+    .cat-기타 { background: #F5F5F5; color: #616161; }
+    .settle-person-card { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+    .settle-person-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #FFF8F2; cursor: pointer; }
+    .settle-person-detail { padding: 10px 14px; border-top: 1px solid var(--border); display: none; }
+    .settle-person-detail.open { display: block; }
+    .final-settle-card { border-radius: 14px; overflow: hidden; margin-bottom: 10px; border: 2px solid var(--border); }
+    .final-settle-header { background: linear-gradient(135deg, #FF6B35, #FF9A5A); color: white; padding: 14px 16px; }
+    .final-settle-body { background: white; padding: 14px 16px; }
+    .transfer-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #F5F5F5; flex-wrap: wrap; }
+    .transfer-from { background: #FEE2E2; color: #DC2626; padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 13px; }
+    .transfer-to { background: #DCFCE7; color: #16A34A; padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 13px; }
+    .transfer-amt { font-size: 16px; font-weight: 800; color: var(--primary); }
+    .account-box { background: #F8F8F8; border-radius: 8px; padding: 8px 12px; margin-top: 6px; font-size: 12px; color: #555; }
+    .account-box strong { color: var(--text); }
+
+    /* Vote */
     .vote-bar { height: 7px; background: #FFE0CC; border-radius: 4px; margin-top: 6px; overflow: hidden; }
     .vote-bar-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.4s; }
 
     /* Child chip */
     .child-chip { display: inline-flex; align-items: center; gap: 4px; background: #FFE8DC; color: var(--primary); padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; margin: 2px; }
+
   </style>
 </head>
 <body>
 
-<!-- ========== AUTH OVERLAY ========== -->
+<!-- AUTH -->
 <div id="auth-overlay">
   <div class="auth-box">
     <div class="auth-logo">
       <h1>🚗 아빠 어디가</h1>
       <p>아빠들의 여행 모임</p>
     </div>
-
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchAuth('login')">로그인</button>
       <button class="auth-tab" onclick="switchAuth('register')">회원가입</button>
     </div>
-
-    <!-- Login -->
     <div id="login-form">
       <div class="auth-form">
         <input class="fi" id="login-email" type="email" placeholder="이메일">
@@ -183,8 +189,6 @@
         <span class="auth-link" onclick="showFindPanel('pw')">비밀번호 찾기</span>
       </div>
     </div>
-
-    <!-- Register -->
     <div id="register-form" style="display:none">
       <div class="auth-form">
         <input class="fi" id="reg-email" type="email" placeholder="이메일 *">
@@ -195,8 +199,6 @@
         <button class="btn-primary" onclick="doRegister()">가입하기</button>
       </div>
     </div>
-
-    <!-- Find Panel -->
     <div id="auth-find" style="display:none">
       <div id="find-id-panel" style="display:none">
         <h4>아이디 찾기</h4>
@@ -209,12 +211,11 @@
         <button class="btn-primary" onclick="findMyPw()">재설정 메일 발송</button>
       </div>
     </div>
-
     <div id="auth-msg"></div>
   </div>
 </div>
 
-<!-- ========== MAIN APP ========== -->
+<!-- APP -->
 <div id="app">
   <div class="app-header">
     <h2>🚗 아빠 어디가</h2>
@@ -249,9 +250,41 @@
       </div>
       <div id="trips-list"></div>
     </div>
+
+    <!-- 여행 상세 -->
     <div id="trip-detail">
       <button class="back-btn" onclick="showTripList()">← 목록으로</button>
-      <div id="trip-detail-content"></div>
+      <div id="trip-info-card"></div>
+
+      <div class="trip-tabs">
+        <button class="trip-tab active" onclick="switchTripTab('info',this)">기본 정보</button>
+        <button class="trip-tab" onclick="switchTripTab('album',this)">📸 앨범</button>
+        <button class="trip-tab" onclick="switchTripTab('settle',this)">💰 정산</button>
+      </div>
+
+      <!-- 기본 정보 탭 -->
+      <div class="trip-tab-content active" id="ttab-info">
+        <div id="trip-attend-section"></div>
+      </div>
+
+      <!-- 앨범 탭 -->
+      <div class="trip-tab-content" id="ttab-album">
+        <div class="sec-hd" style="margin-bottom:12px">
+          <span style="font-weight:700">📸 앨범</span>
+          <button class="btn btn-or btn-sm" onclick="openAlbumLinkModal()">🔗 링크 추가</button>
+        </div>
+        <div id="album-list"></div>
+      </div>
+
+      <!-- 정산 탭 -->
+      <div class="trip-tab-content" id="ttab-settle">
+        <div class="sec-hd" style="margin-bottom:12px">
+          <span style="font-weight:700">경비 정산</span>
+          <button class="btn btn-or btn-sm" onclick="openExpenseModal()">+ 경비 추가</button>
+        </div>
+        <div id="expense-list"></div>
+        <div id="settle-summary"></div>
+      </div>
     </div>
   </div>
 
@@ -268,13 +301,11 @@
   <div class="page" id="page-mypage">
     <div class="sec-title" style="margin-bottom:16px">👤 마이페이지</div>
     <div class="card" id="my-profile-card"></div>
-
     <div class="sec-hd" style="margin-top:20px">
       <span class="sec-title" style="font-size:16px">👶 아이 정보</span>
       <button class="btn btn-or btn-sm" onclick="openChildModal()">+ 아이 추가</button>
     </div>
     <div id="children-list"></div>
-
     <div style="margin-top:24px;display:flex;gap:10px">
       <button class="btn btn-gray" style="flex:1" onclick="doLogout()">로그아웃</button>
       <button class="btn btn-red" style="flex:1" onclick="doWithdraw()">탈퇴하기</button>
@@ -287,46 +318,21 @@
     <div id="admin-members"></div>
   </div>
 
-  <!-- Bottom Nav -->
   <nav class="bottom-nav">
-    <div class="nav-item active" onclick="goPage('home')" id="nav-home">
-      <span class="nav-icon">📢</span>
-      <span class="nav-label">공지</span>
-    </div>
-    <div class="nav-item" onclick="goPage('trips')" id="nav-trips">
-      <span class="nav-icon">🗺️</span>
-      <span class="nav-label">여행</span>
-    </div>
-    <div class="nav-item" onclick="goPage('vote')" id="nav-vote">
-      <span class="nav-icon">🗳️</span>
-      <span class="nav-label">투표</span>
-    </div>
-    <div class="nav-item" onclick="goPage('mypage')" id="nav-mypage">
-      <span class="nav-icon">👤</span>
-      <span class="nav-label">내 정보</span>
-    </div>
-    <div class="nav-item" onclick="goPage('admin')" id="nav-admin" style="display:none">
-      <span class="nav-icon">⚙️</span>
-      <span class="nav-label">관리자</span>
-    </div>
+    <div class="nav-item active" onclick="goPage('home')" id="nav-home"><span class="nav-icon">📢</span><span class="nav-label">공지</span></div>
+    <div class="nav-item" onclick="goPage('trips')" id="nav-trips"><span class="nav-icon">🗺️</span><span class="nav-label">여행</span></div>
+    <div class="nav-item" onclick="goPage('vote')" id="nav-vote"><span class="nav-icon">🗳️</span><span class="nav-label">투표</span></div>
+    <div class="nav-item" onclick="goPage('mypage')" id="nav-mypage"><span class="nav-icon">👤</span><span class="nav-label">내 정보</span></div>
+    <div class="nav-item" onclick="goPage('admin')" id="nav-admin" style="display:none"><span class="nav-icon">⚙️</span><span class="nav-label">관리자</span></div>
   </nav>
 </div>
 
-<!-- Modal Container -->
 <div id="modal-container"></div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import {
-  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged, sendPasswordResetEmail,
-  deleteUser, reauthenticateWithCredential, EmailAuthProvider
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
-  collection, query, where, orderBy, onSnapshot, addDoc,
-  getDocs, serverTimestamp, arrayUnion, arrayRemove, writeBatch, limit
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, orderBy, onSnapshot, addDoc, getDocs, serverTimestamp, arrayUnion, arrayRemove, writeBatch, limit } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDkDpquJP8-VZKFAgOjJgkZKf5Z9Uki910",
@@ -342,42 +348,37 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ============ STATE ============
-let currentUser = null;
-let currentUserDoc = null;
-let noticeFilter = 'all';
-let tripFilter = 'all';
-let allNotices = [];
-let allTrips = [];
-let allUsers = {};
+// STATE
+let currentUser = null, currentUserDoc = null;
+let noticeFilter = 'all', tripFilter = 'all';
+let allNotices = [], allTrips = [], allUsers = {};
 let currentTripId = null;
 let unsubNotices = null, unsubTrips = null, unsubVotes = null;
 
-// ============ AUTH STATE ============
+// ========== AUTH ==========
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
-    const snap = await getDoc(doc(db, 'users', user.uid));
-    if (snap.exists() && snap.data().active !== false) {
-      currentUserDoc = snap.data();
-      await loadAllUsers();
-      showApp();
-    } else {
-      await signOut(auth);
-      showAuthMsg('존재하지 않는 계정이거나 탈퇴한 계정입니다.', 'err');
-    }
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists() && snap.data().active !== false) {
+        currentUserDoc = snap.data();
+        await loadAllUsers();
+        showApp();
+      } else {
+        await signOut(auth);
+        showAuthMsg('존재하지 않는 계정이거나 탈퇴한 계정입니다.', 'err');
+      }
+    } catch(e) { await signOut(auth); showAuthMsg('오류: ' + e.message, 'err'); }
   } else {
-    currentUser = null;
-    currentUserDoc = null;
-    showAuth();
+    currentUser = null; currentUserDoc = null; showAuth();
   }
 });
 
-// ============ AUTH UI ============
 window.switchAuth = (tab) => {
   document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (tab==='login'&&i===0)||(tab==='register'&&i===1)));
-  document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
-  document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+  document.getElementById('login-form').style.display = tab==='login'?'':'none';
+  document.getElementById('register-form').style.display = tab==='register'?'':'none';
   document.getElementById('auth-find').style.display = 'none';
   document.getElementById('auth-msg').innerHTML = '';
 };
@@ -387,242 +388,186 @@ window.showFindPanel = (type) => {
   const idP = document.getElementById('find-id-panel');
   const pwP = document.getElementById('find-pw-panel');
   const showing = panel.style.display !== 'none';
-  const sameType = (type==='id' && idP.style.display!=='none') || (type==='pw' && pwP.style.display!=='none');
-  if (showing && sameType) { panel.style.display = 'none'; return; }
+  const same = (type==='id'&&idP.style.display!=='none')||(type==='pw'&&pwP.style.display!=='none');
+  if (showing && same) { panel.style.display='none'; return; }
   panel.style.display = '';
-  idP.style.display = type === 'id' ? '' : 'none';
-  pwP.style.display = type === 'pw' ? '' : 'none';
+  idP.style.display = type==='id'?'':'none';
+  pwP.style.display = type==='pw'?'':'none';
 };
 
 window.doLogin = async () => {
   const email = document.getElementById('login-email').value.trim();
   const pw = document.getElementById('login-pw').value;
-  if (!email || !pw) return showAuthMsg('이메일과 비밀번호를 입력해주세요.', 'err');
-  try {
-    await signInWithEmailAndPassword(auth, email, pw);
-  } catch (e) {
-    const m = { 'auth/user-not-found':'등록되지 않은 이메일입니다.', 'auth/wrong-password':'비밀번호가 틀렸습니다.', 'auth/invalid-credential':'이메일 또는 비밀번호가 올바르지 않습니다.', 'auth/too-many-requests':'시도가 너무 많습니다. 잠시 후 다시 시도해주세요.' };
-    showAuthMsg(m[e.code] || '로그인 실패: ' + e.message, 'err');
+  if (!email||!pw) return showAuthMsg('이메일과 비밀번호를 입력해주세요.','err');
+  try { await signInWithEmailAndPassword(auth, email, pw); }
+  catch(e) {
+    const m={'auth/user-not-found':'등록되지 않은 이메일입니다.','auth/wrong-password':'비밀번호가 틀렸습니다.','auth/invalid-credential':'이메일 또는 비밀번호가 올바르지 않습니다.','auth/too-many-requests':'잠시 후 다시 시도해주세요.'};
+    showAuthMsg(m[e.code]||'로그인 실패: '+e.message,'err');
   }
 };
 
 window.doRegister = async () => {
-  const email = document.getElementById('reg-email').value.trim();
-  const pw = document.getElementById('reg-pw').value;
-  const name = document.getElementById('reg-name').value.trim();
-  const nick = document.getElementById('reg-nick').value.trim();
-  const phone = document.getElementById('reg-phone').value.trim();
-  if (!email || !pw || !name || !nick) return showAuthMsg('필수 항목을 모두 입력해주세요.', 'err');
-  if (pw.length < 6) return showAuthMsg('비밀번호는 6자 이상이어야 합니다.', 'err');
+  const email=document.getElementById('reg-email').value.trim(), pw=document.getElementById('reg-pw').value;
+  const name=document.getElementById('reg-name').value.trim(), nick=document.getElementById('reg-nick').value.trim();
+  const phone=document.getElementById('reg-phone').value.trim();
+  if (!email||!pw||!name||!nick) return showAuthMsg('필수 항목을 모두 입력해주세요.','err');
+  if (pw.length<6) return showAuthMsg('비밀번호는 6자 이상이어야 합니다.','err');
   try {
-    const firstSnap = await getDocs(query(collection(db, 'users'), limit(1)));
+    const firstSnap = await getDocs(query(collection(db,'users'),limit(1)));
     const isFirst = firstSnap.empty;
     const cred = await createUserWithEmailAndPassword(auth, email, pw);
-    await setDoc(doc(db, 'users', cred.user.uid), {
-      email, realname: name, nick, phone,
-      isAdmin: isFirst, active: true, children: [],
-      createdAt: serverTimestamp()
-    });
-  } catch (e) {
-    const m = { 'auth/email-already-in-use':'이미 사용 중인 이메일입니다.', 'auth/invalid-email':'올바른 이메일 형식이 아닙니다.', 'auth/weak-password':'비밀번호가 너무 약합니다.' };
-    showAuthMsg(m[e.code] || '가입 실패: ' + e.message, 'err');
+    await setDoc(doc(db,'users',cred.user.uid), { email, realname:name, nick, phone, isAdmin:isFirst, active:true, children:[], createdAt:serverTimestamp() });
+  } catch(e) {
+    const m={'auth/email-already-in-use':'이미 사용 중인 이메일입니다.','auth/invalid-email':'올바른 이메일 형식이 아닙니다.','auth/weak-password':'비밀번호가 너무 약합니다.'};
+    showAuthMsg(m[e.code]||'가입 실패: '+e.message,'err');
   }
 };
 
 window.findMyId = async () => {
   const name = document.getElementById('find-name').value.trim();
-  if (!name) return showAuthMsg('이름 또는 별명을 입력해주세요.', 'err');
-  const [s1, s2] = await Promise.all([
-    getDocs(query(collection(db, 'users'), where('realname','==',name))),
-    getDocs(query(collection(db, 'users'), where('nick','==',name)))
-  ]);
-  const docs = [...s1.docs, ...s2.docs];
-  if (!docs.length) return showAuthMsg('해당 이름으로 가입된 계정이 없습니다.', 'err');
-  const email = docs[0].data().email;
-  const masked = email.substring(0,2) + '****' + email.substring(email.indexOf('@'));
-  showAuthMsg('가입된 이메일: ' + masked, 'ok');
+  if (!name) return showAuthMsg('이름 또는 별명을 입력해주세요.','err');
+  const [s1,s2] = await Promise.all([getDocs(query(collection(db,'users'),where('realname','==',name))),getDocs(query(collection(db,'users'),where('nick','==',name)))]);
+  const docs=[...s1.docs,...s2.docs];
+  if (!docs.length) return showAuthMsg('해당 이름으로 가입된 계정이 없습니다.','err');
+  const email=docs[0].data().email;
+  showAuthMsg('가입된 이메일: '+email.substring(0,2)+'****'+email.substring(email.indexOf('@')),'ok');
 };
 
 window.findMyPw = async () => {
-  const email = document.getElementById('find-pw-email').value.trim();
-  if (!email) return showAuthMsg('이메일을 입력해주세요.', 'err');
-  try {
-    await sendPasswordResetEmail(auth, email);
-    showAuthMsg('비밀번호 재설정 메일을 발송했습니다.', 'ok');
-  } catch (e) {
-    const m = { 'auth/user-not-found':'등록되지 않은 이메일입니다.', 'auth/invalid-email':'올바른 이메일 형식이 아닙니다.' };
-    showAuthMsg(m[e.code] || '발송 실패', 'err');
-  }
+  const email=document.getElementById('find-pw-email').value.trim();
+  if (!email) return showAuthMsg('이메일을 입력해주세요.','err');
+  try { await sendPasswordResetEmail(auth,email); showAuthMsg('비밀번호 재설정 메일을 발송했습니다.','ok'); }
+  catch(e) { showAuthMsg({'auth/user-not-found':'등록되지 않은 이메일입니다.','auth/invalid-email':'올바른 이메일 형식이 아닙니다.'}[e.code]||'발송 실패','err'); }
 };
 
-function showAuthMsg(msg, type) {
-  document.getElementById('auth-msg').innerHTML = `<div class="auth-msg ${type}">${msg}</div>`;
-}
+function showAuthMsg(msg,type) { document.getElementById('auth-msg').innerHTML=`<div class="auth-msg ${type}">${msg}</div>`; }
 
-// ============ APP LAYOUT ============
-function showAuth() {
-  document.getElementById('auth-overlay').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-}
+// ========== APP ==========
+function showAuth() { document.getElementById('auth-overlay').style.display='flex'; document.getElementById('app').style.display='none'; }
 
 function showApp() {
-  document.getElementById('auth-overlay').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('header-user').textContent = (currentUserDoc.nick || '') + ' 님';
+  document.getElementById('auth-overlay').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('header-user').textContent=(currentUserDoc.nick||'')+' 님';
   if (currentUserDoc.isAdmin) {
-    document.getElementById('nav-admin').style.display = '';
-    document.getElementById('notice-add-btn').style.display = '';
-    document.getElementById('trip-add-btn').style.display = '';
-    document.getElementById('vote-add-btn').style.display = '';
+    ['nav-admin','notice-add-btn','trip-add-btn','vote-add-btn'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display=''; });
   }
   startListeners();
   goPage('home');
 }
 
 window.goPage = (page) => {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  document.getElementById('nav-' + page)?.classList.add('active');
-  if (page === 'mypage') renderMyPage();
-  if (page === 'admin') renderAdminMembers();
-  if (page === 'trips') showTripList();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('nav-'+page)?.classList.add('active');
+  if (page==='mypage') renderMyPage();
+  if (page==='admin') renderAdminMembers();
+  if (page==='trips') showTripList();
 };
 
-// ============ LISTENERS ============
 function startListeners() {
   if (unsubNotices) unsubNotices();
-  unsubNotices = onSnapshot(
-    query(collection(db, 'notices'), orderBy('pinned','desc'), orderBy('createdAt','desc')),
-    snap => { allNotices = snap.docs.map(d => ({id:d.id,...d.data()})); renderNotices(); }
-  );
+  unsubNotices = onSnapshot(query(collection(db,'notices'),orderBy('pinned','desc'),orderBy('createdAt','desc')), snap=>{
+    allNotices=snap.docs.map(d=>({id:d.id,...d.data()})); renderNotices();
+  }, err=>console.error('notices:',err));
+
   if (unsubTrips) unsubTrips();
-  unsubTrips = onSnapshot(
-    query(collection(db, 'trips'), orderBy('createdAt','desc')),
-    snap => { allTrips = snap.docs.map(d => ({id:d.id,...d.data()})); renderTrips(); }
-  );
+  unsubTrips = onSnapshot(query(collection(db,'trips'),orderBy('createdAt','desc')), snap=>{
+    allTrips=snap.docs.map(d=>({id:d.id,...d.data()})); renderTrips();
+  }, err=>console.error('trips:',err));
+
   if (unsubVotes) unsubVotes();
-  unsubVotes = onSnapshot(
-    query(collection(db, 'votes'), orderBy('createdAt','desc')),
-    snap => renderVotesData(snap.docs.map(d => ({id:d.id,...d.data()})))
-  );
+  unsubVotes = onSnapshot(query(collection(db,'votes'),orderBy('createdAt','desc')), snap=>{
+    renderVotesData(snap.docs.map(d=>({id:d.id,...d.data()})));
+  }, err=>console.error('votes:',err));
 }
 
 async function loadAllUsers() {
-  const snap = await getDocs(query(collection(db, 'users'), where('active','==',true)));
-  snap.docs.forEach(d => { allUsers[d.id] = d.data(); });
+  try {
+    const snap = await getDocs(query(collection(db,'users'),where('active','==',true)));
+    snap.docs.forEach(d=>{ allUsers[d.id]=d.data(); });
+  } catch(e) { console.error('loadUsers:',e); }
 }
 
-// ============ NOTICES ============
-window.filterNotices = (type, el) => {
-  noticeFilter = type;
-  document.querySelectorAll('#page-home .tab').forEach(t => t.classList.remove('active'));
+// ========== NOTICES ==========
+window.filterNotices = (type,el) => {
+  noticeFilter=type;
+  document.querySelectorAll('#page-home .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   renderNotices();
 };
 
 function renderNotices() {
-  const list = document.getElementById('notices-list');
-  let items = allNotices;
-  if (noticeFilter !== 'all') items = items.filter(n => n.type === noticeFilter);
-  if (!items.length) { list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div>등록된 내용이 없습니다.</div>`; return; }
-  list.innerHTML = items.map(n => `
+  const list=document.getElementById('notices-list');
+  let items=allNotices;
+  if (noticeFilter!=='all') items=items.filter(n=>n.type===noticeFilter);
+  if (!items.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">📭</div>등록된 내용이 없습니다.</div>`; return; }
+  list.innerHTML=items.map(n=>`
     <div class="card" style="cursor:pointer" onclick="showNoticeDetail('${n.id}')">
       <span class="notice-type nt-${n.type}">${n.type==='notice'?'📢 공지':'📋 규칙'}</span>
-      ${n.pinned ? '<span class="badge b-or" style="margin-left:4px">📌 고정</span>' : ''}
+      ${n.pinned?'<span class="badge b-or" style="margin-left:4px">📌 고정</span>':''}
       <div class="card-title" style="margin-top:6px">${esc(n.title)}</div>
       <div class="card-sub" style="margin-top:4px">${esc(n.content.substring(0,60))}${n.content.length>60?'...':''}</div>
       <div class="card-sub" style="margin-top:8px">${fmtDate(n.createdAt)}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 window.showNoticeDetail = (id) => {
-  const n = allNotices.find(x => x.id === id);
-  if (!n) return;
-  const adm = currentUserDoc?.isAdmin;
-  openModal(`
-    <div class="modal-hd">
-      <span class="modal-title">${esc(n.title)}</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
+  const n=allNotices.find(x=>x.id===id); if(!n) return;
+  const adm=currentUserDoc?.isAdmin;
+  openModal(`<div class="modal-hd"><span class="modal-title">${esc(n.title)}</span><button class="modal-close" onclick="closeModal()">✕</button></div>
     <span class="notice-type nt-${n.type}">${n.type==='notice'?'📢 공지':'📋 규칙'}</span>
     <p style="margin-top:12px;line-height:1.7;white-space:pre-wrap">${esc(n.content)}</p>
     <div class="card-sub" style="margin-top:12px">${fmtDate(n.createdAt)}</div>
-    ${adm ? `<div style="display:flex;gap:8px;margin-top:14px">
+    ${adm?`<div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-out btn-sm" onclick="openNoticeModal('${n.id}')">수정</button>
       <button class="btn btn-red btn-sm" onclick="deleteNotice('${n.id}')">삭제</button>
       <button class="btn btn-gray btn-sm" onclick="togglePin('${n.id}',${n.pinned})">${n.pinned?'고정 해제':'📌 고정'}</button>
-    </div>` : ''}
-  `);
+    </div>`:''}`);
 };
 
-window.openNoticeModal = (id = '') => {
-  const n = id ? allNotices.find(x => x.id === id) : null;
-  openModal(`
-    <div class="modal-hd">
-      <span class="modal-title">${n ? '공지 수정' : '공지 작성'}</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="fg"><label class="fl">유형</label>
-      <select class="fi" id="m-ntype">
-        <option value="notice" ${n?.type==='notice'?'selected':''}>📢 공지사항</option>
-        <option value="rule" ${n?.type==='rule'?'selected':''}>📋 모임 규칙</option>
-      </select></div>
-    <div class="fg"><label class="fl">제목</label>
-      <input class="fi" id="m-ntitle" value="${esc(n?.title||'')}"></div>
-    <div class="fg"><label class="fl">내용</label>
-      <textarea class="fi" id="m-ncontent" rows="5">${esc(n?.content||'')}</textarea></div>
-    <label style="display:flex;align-items:center;gap:8px;margin-bottom:14px;cursor:pointer">
-      <input type="checkbox" id="m-npin" ${n?.pinned?'checked':''}> 고정 게시
-    </label>
-    <button class="btn btn-or" style="width:100%" onclick="saveNotice('${id}')">저장</button>
-  `);
+window.openNoticeModal = (id='') => {
+  const n=id?allNotices.find(x=>x.id===id):null;
+  openModal(`<div class="modal-hd"><span class="modal-title">${n?'공지 수정':'공지 작성'}</span><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="fg"><label class="fl">유형</label><select class="fi" id="m-ntype"><option value="notice" ${n?.type==='notice'?'selected':''}>📢 공지사항</option><option value="rule" ${n?.type==='rule'?'selected':''}>📋 모임 규칙</option></select></div>
+    <div class="fg"><label class="fl">제목</label><input class="fi" id="m-ntitle" value="${esc(n?.title||'')}"></div>
+    <div class="fg"><label class="fl">내용</label><textarea class="fi" id="m-ncontent" rows="5">${esc(n?.content||'')}</textarea></div>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:14px;cursor:pointer"><input type="checkbox" id="m-npin" ${n?.pinned?'checked':''}> 고정 게시</label>
+    <button class="btn btn-or" style="width:100%" onclick="saveNotice('${id}')">저장</button>`);
 };
 
 window.saveNotice = async (id) => {
-  const type = document.getElementById('m-ntype').value;
-  const title = document.getElementById('m-ntitle').value.trim();
-  const content = document.getElementById('m-ncontent').value.trim();
-  const pinned = document.getElementById('m-npin').checked;
-  if (!title || !content) return alert('제목과 내용을 입력해주세요.');
-  const data = { type, title, content, pinned };
-  if (id) await updateDoc(doc(db,'notices',id), data);
-  else await addDoc(collection(db,'notices'), {...data, createdBy:currentUser.uid, createdAt:serverTimestamp()});
+  const type=document.getElementById('m-ntype').value, title=document.getElementById('m-ntitle').value.trim();
+  const content=document.getElementById('m-ncontent').value.trim(), pinned=document.getElementById('m-npin').checked;
+  if (!title||!content) return alert('제목과 내용을 입력해주세요.');
+  const data={type,title,content,pinned};
+  if (id) await updateDoc(doc(db,'notices',id),data);
+  else await addDoc(collection(db,'notices'),{...data,createdBy:currentUser.uid,createdAt:serverTimestamp()});
   closeModal();
 };
+window.deleteNotice = async (id) => { if (!confirm('삭제하시겠습니까?')) return; await deleteDoc(doc(db,'notices',id)); closeModal(); };
+window.togglePin = async (id,pinned) => { await updateDoc(doc(db,'notices',id),{pinned:!pinned}); closeModal(); };
 
-window.deleteNotice = async (id) => {
-  if (!confirm('삭제하시겠습니까?')) return;
-  await deleteDoc(doc(db,'notices',id));
-  closeModal();
-};
-
-window.togglePin = async (id, pinned) => {
-  await updateDoc(doc(db,'notices',id), { pinned: !pinned });
-  closeModal();
-};
-
-// ============ TRIPS ============
-window.filterTrips = (type, el) => {
-  tripFilter = type;
-  document.querySelectorAll('#trips-list-view .tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  renderTrips();
+// ========== TRIPS ==========
+window.filterTrips = (type,el) => {
+  tripFilter=type;
+  document.querySelectorAll('#trips-list-view .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); renderTrips();
 };
 
 window.showTripList = () => {
-  document.getElementById('trips-list-view').style.display = '';
-  document.getElementById('trip-detail').style.display = 'none';
-  currentTripId = null;
+  document.getElementById('trips-list-view').style.display='';
+  document.getElementById('trip-detail').style.display='none';
+  currentTripId=null;
 };
 
 function renderTrips() {
-  const list = document.getElementById('trips-list');
-  let items = allTrips;
-  if (tripFilter !== 'all') items = items.filter(t => t.status === tripFilter);
-  if (!items.length) { list.innerHTML = `<div class="empty"><div class="empty-icon">🗺️</div>여행 일정이 없습니다.</div>`; return; }
-  list.innerHTML = items.map(t => `
+  const list=document.getElementById('trips-list');
+  let items=allTrips;
+  if (tripFilter!=='all') items=items.filter(t=>t.status===tripFilter);
+  if (!items.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">🗺️</div>여행 일정이 없습니다.</div>`; return; }
+  list.innerHTML=items.map(t=>`
     <div class="card" style="cursor:pointer" onclick="showTripDetail('${t.id}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
@@ -633,408 +578,706 @@ function renderTrips() {
         </div>
         <span style="font-size:28px">🚗</span>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 window.showTripDetail = async (tripId) => {
   currentTripId = tripId;
   document.getElementById('trips-list-view').style.display = 'none';
-  document.getElementById('trip-detail').style.display = '';
-  document.getElementById('trip-detail-content').innerHTML = '<div style="text-align:center;padding:40px;color:var(--sub)">로딩 중...</div>';
+  document.getElementById('trip-detail').style.display = 'block';
 
-  const trip = allTrips.find(t => t.id === tripId);
+  const trip = allTrips.find(t=>t.id===tripId);
   if (!trip) return;
   const adm = currentUserDoc?.isAdmin;
 
-  const [attSnap, albSnap, expSnap] = await Promise.all([
-    getDocs(collection(db,'trips',tripId,'attendees')),
-    getDocs(query(collection(db,'trips',tripId,'albums'), orderBy('addedAt','asc'))),
-    getDocs(query(collection(db,'trips',tripId,'expenses'), orderBy('addedAt','asc')))
-  ]);
-
-  const attendees = {};
-  attSnap.docs.forEach(d => { attendees[d.id] = d.data(); });
-  const albums = albSnap.docs.map(d => ({id:d.id,...d.data()}));
-  const expenses = expSnap.docs.map(d => ({id:d.id,...d.data()}));
-  const myAtt = attendees[currentUser.uid];
-
-  // Settlement
-  const settle = {};
-  expenses.forEach(e => {
-    if (!e.participants?.length) return;
-    const share = Math.ceil(e.amount / e.participants.length);
-    e.participants.forEach(uid => { settle[uid] = (settle[uid]||0) + share; });
-  });
-
-  const yesAtt = Object.entries(attendees).filter(([,v]) => v.attending);
-  const noAtt = Object.entries(attendees).filter(([,v]) => !v.attending);
-
-  document.getElementById('trip-detail-content').innerHTML = `
+  // 여행 정보 카드
+  document.getElementById('trip-info-card').innerHTML = `
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
           <span class="badge ${trip.status==='planned'?'b-bl':'b-gy'}">${trip.status==='planned'?'예정':'완료'}</span>
           <h2 style="margin-top:8px;font-size:20px;font-weight:800">${esc(trip.title)}</h2>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+            <div>📍 <strong>${esc(trip.location||'-')}</strong></div>
+            <div>📅 ${trip.dateStart||''}${trip.dateEnd&&trip.dateEnd!==trip.dateStart?' ~ '+trip.dateEnd:''}</div>
+            ${trip.description?`<div style="margin-top:6px;color:#555;line-height:1.6;white-space:pre-wrap;font-size:14px">${esc(trip.description)}</div>`:''}
+          </div>
         </div>
-        ${adm?`<button class="btn btn-gray btn-sm" onclick="openTripModal('${tripId}')">수정</button>`:''}
+        ${adm?`<div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-gray btn-sm" onclick="openTripModal('${tripId}')">수정</button>
+          <button class="btn btn-red btn-sm" onclick="deleteTrip('${tripId}')">삭제</button>
+        </div>`:''}
       </div>
-      <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
-        <div>📍 <strong>${esc(trip.location||'-')}</strong></div>
-        <div>📅 ${trip.dateStart||''}${trip.dateEnd&&trip.dateEnd!==trip.dateStart?' ~ '+trip.dateEnd:''}</div>
-        ${trip.description?`<div style="margin-top:8px;color:#555;line-height:1.6;white-space:pre-wrap">${esc(trip.description)}</div>`:''}
-      </div>
-    </div>
+    </div>`;
 
-    <div class="card">
-      <div style="font-weight:700;margin-bottom:12px">✅ 참석 여부</div>
-      <div style="display:flex;gap:10px;margin-bottom:14px">
-        <button class="att-btn att-yes ${myAtt?.attending===true?'on':''}" onclick="setAttendance('${tripId}',true)">✅ 참석</button>
-        <button class="att-btn att-no ${myAtt?.attending===false?'on':''}" onclick="setAttendance('${tripId}',false)">❌ 미참석</button>
-      </div>
-      <div class="card-sub">✅ 참석 (${yesAtt.length}명): ${yesAtt.map(([uid])=>esc(allUsers[uid]?.nick||uid)).join(', ')||'없음'}</div>
-      <div class="card-sub" style="margin-top:4px">❌ 미참석 (${noAtt.length}명): ${noAtt.map(([uid])=>esc(allUsers[uid]?.nick||uid)).join(', ')||'없음'}</div>
-    </div>
+  // 첫 탭으로 초기화
+  switchTripTab('info', document.querySelector('.trip-tab'));
 
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="font-weight:700">📸 앨범</div>
-        <button class="btn btn-or btn-sm" onclick="openAlbumModal('${tripId}')">+ 추가</button>
-      </div>
-      ${!albums.length ? '<div class="card-sub">앨범 링크가 없습니다.</div>' :
-        albums.map(a => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-            <div>
-              <div style="font-size:14px;font-weight:600">${esc(a.title)}</div>
-              <div style="font-size:12px;color:var(--sub)">${esc(allUsers[a.addedBy]?.nick||'')} · ${fmtDate(a.addedAt)}</div>
-            </div>
-            <div style="display:flex;gap:6px">
-              <a href="${esc(a.url)}" target="_blank" rel="noopener" class="btn btn-out btn-sm">열기</a>
-              ${adm||a.addedBy===currentUser.uid?`<button class="btn btn-gray btn-sm" onclick="deleteAlbum('${tripId}','${a.id}')">삭제</button>`:''}
-            </div>
-          </div>
-        `).join('')
-      }
-    </div>
+  // 기본정보(참석) 탭 로드
+  loadAttendance(tripId);
 
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="font-weight:700">💰 경비 정산</div>
-        <button class="btn btn-or btn-sm" onclick="openExpenseModal('${tripId}')">+ 추가</button>
-      </div>
-      ${!expenses.length ? '<div class="card-sub">등록된 경비가 없습니다.</div>' : `
-        ${expenses.map(e=>`
-          <div class="exp-row">
-            <div>
-              <div style="font-size:14px;font-weight:600">${esc(e.title)}</div>
-              <div style="font-size:12px;color:var(--sub)">${e.participants?.length||0}명 · 1인 ${won(Math.ceil(e.amount/(e.participants?.length||1)))}</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <div style="font-weight:700">${won(e.amount)}</div>
-              ${adm||e.addedBy===currentUser.uid?`<button class="btn btn-gray btn-sm" onclick="deleteExpense('${tripId}','${e.id}')">삭제</button>`:''}
-            </div>
-          </div>
-        `).join('')}
-        <div class="divider"></div>
-        <div style="font-weight:700;margin-bottom:8px">인원별 정산</div>
-        ${Object.entries(settle).map(([uid,amt])=>`
-          <div class="settle-row">
-            <span>${esc(allUsers[uid]?.nick||uid)}</span>
-            <span style="font-weight:700;color:var(--primary)">${won(amt)}</span>
-          </div>
-        `).join('')||'<div class="card-sub">정산 데이터 없음</div>'}
-        <div class="settle-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:8px">
-          <span style="font-weight:700">총 합계</span>
-          <span style="font-weight:800;color:var(--primary)">${won(expenses.reduce((s,e)=>s+e.amount,0))}</span>
-        </div>
-      `}
-    </div>
+  // 앨범 탭 초기화 (탭 클릭 시 로드)
+  document.getElementById('album-list').innerHTML = '';
 
-    ${adm ? `<div style="margin-bottom:20px"><button class="btn btn-red" style="width:100%" onclick="deleteTrip('${tripId}')">여행 삭제</button></div>` : ''}
-  `;
+  // 정산 탭 초기화
+  document.getElementById('expense-list').innerHTML = '';
+  document.getElementById('settle-summary').innerHTML = '';
 };
+
+window.switchTripTab = (tab, el) => {
+  document.querySelectorAll('.trip-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.trip-tab-content').forEach(t=>t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else document.querySelector('.trip-tab')?.classList.add('active');
+  document.getElementById('ttab-'+tab)?.classList.add('active');
+
+  if (tab==='album' && currentTripId) loadAlbums(currentTripId);
+  if (tab==='settle' && currentTripId) loadExpenses(currentTripId);
+};
+
+// ---- 참석 ----
+async function loadAttendance(tripId) {
+  const attSection = document.getElementById('trip-attend-section');
+  attSection.innerHTML = '<div class="card-sub" style="padding:10px">로딩 중...</div>';
+  try {
+    const snap = await getDocs(collection(db,'trips',tripId,'attendees'));
+    const attendees = {};
+    snap.docs.forEach(d=>{ attendees[d.id]=d.data(); });
+    const myAtt = attendees[currentUser.uid];
+    const yesAtt = Object.entries(attendees).filter(([,v])=>v.attending);
+    const noAtt = Object.entries(attendees).filter(([,v])=>!v.attending);
+    attSection.innerHTML = `
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:12px">✅ 참석 여부</div>
+        <div style="display:flex;gap:10px;margin-bottom:14px">
+          <button class="att-btn att-yes ${myAtt?.attending===true?'on':''}" onclick="setAttendance('${tripId}',true)">✅ 참석</button>
+          <button class="att-btn att-no ${myAtt?.attending===false?'on':''}" onclick="setAttendance('${tripId}',false)">❌ 미참석</button>
+        </div>
+        <div class="card-sub">✅ 참석 (${yesAtt.length}명): ${yesAtt.map(([uid])=>esc(allUsers[uid]?.nick||uid)).join(', ')||'없음'}</div>
+        <div class="card-sub" style="margin-top:4px">❌ 미참석 (${noAtt.length}명): ${noAtt.map(([uid])=>esc(allUsers[uid]?.nick||uid)).join(', ')||'없음'}</div>
+      </div>`;
+  } catch(e) { attSection.innerHTML=`<div class="card"><div class="card-sub">오류: ${e.message}</div></div>`; }
+}
 
 window.setAttendance = async (tripId, attending) => {
-  await setDoc(doc(db,'trips',tripId,'attendees',currentUser.uid), { uid:currentUser.uid, attending, updatedAt:serverTimestamp() }, {merge:true});
-  showTripDetail(tripId);
+  await setDoc(doc(db,'trips',tripId,'attendees',currentUser.uid), {uid:currentUser.uid,attending,updatedAt:serverTimestamp()},{merge:true});
+  loadAttendance(tripId);
 };
 
-window.openTripModal = (id = '') => {
-  const t = id ? allTrips.find(x => x.id === id) : null;
+// ---- 앨범 ----
+async function loadAlbums(tripId) {
+  const list = document.getElementById('album-list');
+  list.innerHTML = '<div class="card-sub" style="padding:10px">로딩 중...</div>';
+  try {
+    const snap = await getDocs(query(collection(db,'trips',tripId,'albumItems'),orderBy('createdAt','desc')));
+    const items = snap.docs.map(d=>({id:d.id,...d.data()}));
+    if (!items.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">📷</div>아직 앨범이 없습니다.</div>`; return; }
+    list.innerHTML = items.map(item=>`
+      <div class="album-item" id="albumitem-${item.id}">
+        <div class="album-item-header">
+          <div>
+            <div style="font-weight:700;font-size:14px">${esc(item.title||'앨범')}</div>
+            <div style="font-size:12px;color:var(--sub)">${esc(allUsers[item.addedBy]?.nick||'')} · ${fmtDate(item.createdAt)}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <a href="${esc(item.url)}" target="_blank" rel="noopener" class="btn btn-out btn-sm">🔗 열기</a>
+            ${currentUserDoc?.isAdmin||item.addedBy===currentUser.uid?`<button class="btn btn-gray btn-sm" onclick="deleteAlbumItem('${tripId}','${item.id}')">삭제</button>`:''}
+          </div>
+        </div>
+        <div style="padding:0 12px 12px;font-size:13px;color:var(--sub)">🔗 ${esc(item.url)}</div>
+        <div class="album-item-footer">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);cursor:pointer" onclick="toggleComments('${item.id}')">
+            💬 댓글 <span id="comment-count-${item.id}"></span>
+          </div>
+        </div>
+        <div id="comments-${item.id}" style="display:none">
+          <div class="comment-list" id="comment-list-${item.id}"></div>
+          <div class="comment-input-row">
+            <input class="comment-input" id="comment-input-${item.id}" placeholder="댓글 입력..." onkeydown="if(event.key==='Enter')addComment('${tripId}','${item.id}')">
+            <button class="btn btn-or btn-sm" onclick="addComment('${tripId}','${item.id}')">등록</button>
+          </div>
+        </div>
+      </div>`).join('');
+
+    // 댓글 수 로드
+    items.forEach(item => loadCommentCount(tripId, item.id));
+  } catch(e) { list.innerHTML=`<div class="card"><div class="card-sub">오류: ${e.message}</div></div>`; }
+}
+
+window.toggleComments = async (itemId) => {
+  const el = document.getElementById('comments-'+itemId);
+  if (el.style.display==='none') {
+    el.style.display='';
+    loadComments(currentTripId, itemId);
+  } else {
+    el.style.display='none';
+  }
+};
+
+async function loadCommentCount(tripId, itemId) {
+  try {
+    const snap = await getDocs(collection(db,'trips',tripId,'albumItems',itemId,'comments'));
+    const el = document.getElementById('comment-count-'+itemId);
+    if (el) el.textContent = snap.size > 0 ? `(${snap.size})` : '';
+  } catch(e) {}
+}
+
+async function loadComments(tripId, itemId) {
+  const list = document.getElementById('comment-list-'+itemId);
+  if (!list) return;
+  try {
+    const snap = await getDocs(query(collection(db,'trips',tripId,'albumItems',itemId,'comments'),orderBy('createdAt','asc')));
+    const comments = snap.docs.map(d=>({id:d.id,...d.data()}));
+    if (!comments.length) { list.innerHTML='<div style="padding:8px 0;font-size:13px;color:var(--sub)">첫 댓글을 남겨보세요!</div>'; return; }
+    list.innerHTML = comments.map(c=>`
+      <div class="comment-row">
+        <span class="comment-nick">${esc(allUsers[c.uid]?.nick||'?')}</span>
+        <span class="comment-text">${esc(c.text)}</span>
+        <span class="comment-time">${fmtDateShort(c.createdAt)}</span>
+        ${currentUserDoc?.isAdmin||c.uid===currentUser.uid?`<button onclick="deleteComment('${tripId}','${itemId}','${c.id}')" style="background:none;border:none;cursor:pointer;color:#CCC;font-size:11px">✕</button>`:''}
+      </div>`).join('');
+  } catch(e) { if(list) list.innerHTML='<div style="padding:8px;color:red;font-size:12px">댓글 로딩 오류</div>'; }
+}
+
+window.addComment = async (tripId, itemId) => {
+  const input = document.getElementById('comment-input-'+itemId);
+  const text = input.value.trim();
+  if (!text) return;
+  input.value='';
+  await addDoc(collection(db,'trips',tripId,'albumItems',itemId,'comments'), { uid:currentUser.uid, text, createdAt:serverTimestamp() });
+  loadComments(tripId, itemId);
+  loadCommentCount(tripId, itemId);
+};
+
+window.deleteComment = async (tripId, itemId, commentId) => {
+  await deleteDoc(doc(db,'trips',tripId,'albumItems',itemId,'comments',commentId));
+  loadComments(tripId, itemId);
+  loadCommentCount(tripId, itemId);
+};
+
+window.openAlbumLinkModal = () => {
+  openModal(`<div class="modal-hd"><span class="modal-title">앨범 링크 추가</span><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="fg"><label class="fl">앨범 이름 *</label><input class="fi" id="m-aname" placeholder="예: 강원도 1일차"></div>
+    <div class="fg"><label class="fl">링크 * (구글포토 / 카카오)</label><input class="fi" id="m-aurl" type="url" placeholder="https://..."></div>
+    <button class="btn btn-or" style="width:100%" onclick="saveAlbumLink()">추가</button>`);
+};
+
+window.saveAlbumLink = async () => {
+  const title=document.getElementById('m-aname').value.trim(), url=document.getElementById('m-aurl').value.trim();
+  if (!title||!url) return alert('이름과 링크를 입력해주세요.');
+  await addDoc(collection(db,'trips',currentTripId,'albumItems'), { type:'link', title, url, addedBy:currentUser.uid, createdAt:serverTimestamp() });
+  closeModal();
+  loadAlbums(currentTripId);
+};
+
+
+window.deleteAlbumItem = async (tripId, itemId) => {
+  if (!confirm('삭제하시겠습니까?')) return;
+  const cSnap = await getDocs(collection(db,'trips',tripId,'albumItems',itemId,'comments'));
+  const batch = writeBatch(db);
+  cSnap.docs.forEach(d=>batch.delete(d.ref));
+  batch.delete(doc(db,'trips',tripId,'albumItems',itemId));
+  await batch.commit();
+  loadAlbums(tripId);
+};
+
+// ---- 정산 ----
+async function loadExpenses(tripId) {
+  const expList=document.getElementById('expense-list'), summary=document.getElementById('settle-summary');
+  expList.innerHTML='<div class="card-sub" style="padding:10px">로딩 중...</div>';
+  summary.innerHTML='';
+  try {
+    const snap = await getDocs(collection(db,'trips',tripId,'expenses'));
+    const expenses = snap.docs.map(d=>({id:d.id,...d.data()}));
+    const adm = currentUserDoc?.isAdmin;
+
+    if (!expenses.length) { expList.innerHTML=`<div class="empty"><div class="empty-icon">💰</div>등록된 경비가 없습니다.<br><span style="font-size:13px">위 "+ 경비 추가" 버튼으로 추가해주세요.</span></div>`; return; }
+
+    // 카테고리별 그룹
+    const catMap = {};
+    expenses.forEach(e => {
+      const cat = e.category || '🛒 기타';
+      if (!catMap[cat]) catMap[cat] = [];
+      catMap[cat].push(e);
+    });
+
+    expList.innerHTML = Object.entries(catMap).map(([cat, items]) => `
+      <div class="card" style="margin-bottom:10px">
+        <div style="font-weight:800;margin-bottom:10px;font-size:15px">${esc(cat)}</div>
+        ${items.map(e => {
+          const share = Math.ceil(e.amount / (e.participants?.length||1));
+          const catKey = cat.replace(/[^가-힣]/g,'').trim();
+          return `
+          <div class="exp-row">
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:14px">${esc(e.title)}</div>
+              ${e.memo?`<div class="card-sub">📝 ${esc(e.memo)}</div>`:''}
+              <div class="card-sub">${e.participants?.length||0}명 · 1인 <strong>${won(share)}</strong></div>
+              <div class="card-sub" style="margin-top:2px">${e.participants?.map(uid=>`<span style="display:inline-block;background:#F5F5F5;border-radius:4px;padding:1px 5px;font-size:11px;margin:1px">${esc(allUsers[uid]?.nick||uid)}</span>`).join('')||''}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-left:10px">
+              <div style="font-size:15px;font-weight:800;color:var(--primary)">${won(e.amount)}</div>
+              ${adm||e.addedBy===currentUser.uid?`<button class="btn btn-gray btn-sm" onclick="deleteExpense('${tripId}','${e.id}')">삭제</button>`:''}
+            </div>
+          </div>`;
+        }).join('')}
+        <div style="display:flex;justify-content:flex-end;padding-top:8px;font-weight:700;color:var(--sub);font-size:13px">
+          소계: <span style="color:var(--primary);margin-left:6px">${won(items.reduce((s,e)=>s+e.amount,0))}</span>
+        </div>
+      </div>`).join('');
+
+    // ── 순잔액(net balance) 계산 ──
+    // 양수 = 받아야 할 돈, 음수 = 내야 할 돈
+    const balance = {};
+    const personDetail = {}; // uid → [{title, cat, amount, paidBy, share}]
+    expenses.forEach(e => {
+      if (!e.participants?.length) return;
+      const payer = e.paidBy || e.addedBy;
+      const share = Math.round(e.amount / e.participants.length);
+      const cat = e.category || '🛒 기타';
+      // 결제자는 전액 냈으므로 +amount
+      balance[payer] = (balance[payer]||0) + e.amount;
+      // 참여자는 각자 share만큼 -
+      e.participants.forEach(uid => {
+        balance[uid] = (balance[uid]||0) - share;
+        if (!personDetail[uid]) personDetail[uid] = [];
+        personDetail[uid].push({ title:e.title, cat, share, payer });
+      });
+    });
+
+    const totalAmt = expenses.reduce((s,e)=>s+e.amount,0);
+    const catTotal = {};
+    expenses.forEach(e => { const c=e.category||'🛒 기타'; catTotal[c]=(catTotal[c]||0)+e.amount; });
+
+    // ── 최소 이체 계산 (greedy) ──
+    function simplifyDebts(bal) {
+      const pos = Object.entries(bal).filter(([,v])=>v>50).sort((a,b)=>b[1]-a[1]).map(([uid,v])=>({uid,v}));
+      const neg = Object.entries(bal).filter(([,v])=>v<-50).sort((a,b)=>a[1]-b[1]).map(([uid,v])=>({uid,v:-v}));
+      const txns = [];
+      let i=0, j=0;
+      while(i<pos.length && j<neg.length){
+        const t=Math.min(pos[i].v, neg[j].v);
+        txns.push({from:neg[j].uid, to:pos[i].uid, amount:Math.round(t)});
+        pos[i].v-=t; neg[j].v-=t;
+        if(pos[i].v<50) i++;
+        if(neg[j].v<50) j++;
+      }
+      return txns;
+    }
+    const transactions = simplifyDebts({...balance});
+
+    summary.innerHTML = `
+      <div class="card">
+        <div style="font-weight:800;font-size:15px;margin-bottom:12px">📊 카테고리별 합계</div>
+        ${Object.entries(catTotal).map(([cat,amt])=>`
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F5F5F5;font-size:14px">
+            <span>${esc(cat)}</span><span style="font-weight:700">${won(amt)}</span>
+          </div>`).join('')}
+        <div style="display:flex;justify-content:space-between;padding:10px 0 4px;font-weight:800;font-size:15px">
+          <span>전체 합계</span><span style="color:var(--primary)">${won(totalAmt)}</span>
+        </div>
+      </div>
+
+      <div class="final-settle-card">
+        <div class="final-settle-header">
+          <div style="font-weight:800;font-size:16px;margin-bottom:2px">💸 최종 정산</div>
+          <div style="font-size:12px;opacity:0.85">아래 금액을 이체하면 정산 완료!</div>
+        </div>
+        <div class="final-settle-body">
+          ${!transactions.length
+            ? '<div style="text-align:center;padding:16px;color:var(--sub);font-size:13px">정산할 내역이 없습니다 🎉</div>'
+            : transactions.map(t => {
+                const toUser = allUsers[t.to]||{};
+                const hasAccount = toUser.bankName || toUser.accountNum;
+                return `
+                <div class="transfer-row">
+                  <span class="transfer-from">${esc(allUsers[t.from]?.nick||t.from)}</span>
+                  <span style="color:var(--sub);font-size:18px">→</span>
+                  <span class="transfer-to">${esc(toUser.nick||t.to)}</span>
+                  <span class="transfer-amt">${won(t.amount)}</span>
+                  ${hasAccount?`<div class="account-box" style="width:100%">
+                    🏦 <strong>${esc(toUser.bankName||'')}</strong>
+                    ${toUser.accountNum?`<span style="font-family:monospace;letter-spacing:1px"> ${esc(toUser.accountNum)}</span>`:''}
+                    ${toUser.accountHolder?`· <strong>${esc(toUser.accountHolder)}</strong>`:''}
+                  </div>`:'<div style="font-size:11px;color:#CCC;width:100%">계좌 정보 없음 (마이페이지에서 등록)</div>'}
+                </div>`;
+              }).join('')}
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-weight:800;font-size:15px;margin-bottom:12px">👤 인원별 상세 내역</div>
+        ${Object.keys(personDetail).length===0
+          ? '<div class="card-sub">내역 없음</div>'
+          : Object.entries(personDetail).map(([uid,items])=>{
+              const isMe = uid===currentUser.uid;
+              const myBal = Math.round(balance[uid]||0);
+              const balLabel = myBal>50
+                ? `<span style="color:#16A34A;font-weight:700">+${won(myBal)} 받을 돈</span>`
+                : myBal<-50
+                ? `<span style="color:#DC2626;font-weight:700">${won(myBal)} 낼 돈</span>`
+                : `<span style="color:var(--sub);font-size:12px">정산 완료</span>`;
+              return `
+              <div class="settle-person-card">
+                <div class="settle-person-header" onclick="toggleSettleDetail('${uid}')">
+                  <div>
+                    ${isMe?`<span style="font-weight:800">나 (${esc(allUsers[uid]?.nick||uid)})</span> <span class="badge b-or" style="font-size:10px">나</span>`
+                         :`<span style="font-weight:700">${esc(allUsers[uid]?.nick||uid)}</span>`}
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    ${balLabel}
+                    <span style="color:var(--sub);font-size:12px">▾</span>
+                  </div>
+                </div>
+                <div class="settle-person-detail" id="settle-detail-${uid}">
+                  ${items.map(i=>`
+                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px solid #F9F9F9">
+                      <div>
+                        <span style="font-size:11px;background:#F0F0F0;border-radius:4px;padding:1px 5px;margin-right:4px">${esc(i.cat)}</span>
+                        ${esc(i.title)}
+                        <span style="color:var(--sub);font-size:11px"> (결제: ${esc(allUsers[i.payer]?.nick||i.payer)})</span>
+                      </div>
+                      <span style="font-weight:700;color:#DC2626;margin-left:8px;white-space:nowrap">-${won(i.share)}</span>
+                    </div>`).join('')}
+                  <div style="display:flex;justify-content:flex-end;padding-top:6px;font-size:13px">
+                    내 부담 합계: <strong style="margin-left:6px">${won(items.reduce((s,i)=>s+i.share,0))}</strong>
+                  </div>
+                </div>
+              </div>`;
+            }).join('')}
+      </div>`;
+  } catch(e) { expList.innerHTML=`<div class="card"><div class="card-sub">오류: ${e.message}</div></div>`; }
+}
+
+const CATEGORIES = ['🍽️ 식대','🏨 숙소비','🎢 이용료','🚗 교통비','🛒 기타'];
+
+window.openExpenseModal = () => {
+  const userList = Object.entries(allUsers);
+  const userOpts = userList.map(([uid,u]) => `
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F5F5F5;cursor:pointer">
+      <input type="checkbox" class="exp-chk" value="${uid}" checked>
+      <span style="font-weight:600">${esc(u.nick)}</span>
+      <span style="color:var(--sub);font-size:12px">${esc(u.realname)}</span>
+    </label>`).join('');
+
+  const payerOpts = userList.map(([uid,u]) =>
+    `<option value="${uid}" ${uid===currentUser.uid?'selected':''}>${esc(u.nick)} (${esc(u.realname)})</option>`
+  ).join('');
+
+  const catOpts = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+
   openModal(`
-    <div class="modal-hd">
-      <span class="modal-title">${t?'여행 수정':'여행 추가'}</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-hd"><span class="modal-title">💰 경비 추가</span><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="fg">
+      <label class="fl">카테고리</label>
+      <select class="fi" id="m-ecat">${catOpts}</select>
     </div>
+    <div class="fg">
+      <label class="fl">항목 이름 *</label>
+      <input class="fi" id="m-ename" placeholder="예: 첫날 저녁 고기">
+    </div>
+    <div class="fg">
+      <label class="fl">실제 결제한 사람 *</label>
+      <select class="fi" id="m-epayer">${payerOpts}</select>
+    </div>
+    <div class="fg">
+      <label class="fl">금액 (원) *</label>
+      <input class="fi" id="m-eamt" type="number" placeholder="0" oninput="calcExpPrev()">
+    </div>
+    <div class="fg">
+      <label class="fl">메모 (선택)</label>
+      <input class="fi" id="m-ememo" placeholder="영수증 번호, 비고 등">
+    </div>
+    <div class="fg">
+      <label class="fl">참여 인원 (함께 나눌 사람)</label>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <button type="button" class="btn btn-gray btn-sm" onclick="toggleAllExp(true)">전체 선택</button>
+        <button type="button" class="btn btn-gray btn-sm" onclick="toggleAllExp(false)">전체 해제</button>
+      </div>
+      <div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 8px">${userOpts}</div>
+    </div>
+    <div id="m-eprev" style="background:#FFF3ED;padding:10px;border-radius:8px;margin-bottom:14px;font-size:14px;font-weight:700;text-align:center;display:none"></div>
+    <button class="btn btn-or" style="width:100%" onclick="saveExpense('${currentTripId}')">추가</button>`);
+};
+
+window.toggleAllExp = (check) => {
+  document.querySelectorAll('.exp-chk').forEach(c => c.checked = check);
+  calcExpPrev();
+};
+
+window.calcExpPrev = () => {
+  const amt = parseInt(document.getElementById('m-eamt')?.value)||0;
+  const n = document.querySelectorAll('.exp-chk:checked').length;
+  const prev = document.getElementById('m-eprev');
+  if (!prev) return;
+  if (amt > 0 && n > 0) {
+    prev.style.display = '';
+    prev.innerHTML = `${won(amt)} ÷ ${n}명 = <strong style="color:var(--primary)">${won(Math.ceil(amt/n))}/인</strong>`;
+  } else prev.style.display = 'none';
+};
+
+window.saveExpense = async (tripId) => {
+  const category = document.getElementById('m-ecat').value;
+  const title = document.getElementById('m-ename').value.trim();
+  const amount = parseInt(document.getElementById('m-eamt').value)||0;
+  const memo = document.getElementById('m-ememo').value.trim();
+  const paidBy = document.getElementById('m-epayer').value;
+  const participants = [...document.querySelectorAll('.exp-chk:checked')].map(c=>c.value);
+  if (!title || amount<=0) return alert('항목 이름과 금액을 입력해주세요.');
+  if (!participants.length) return alert('참여 인원을 1명 이상 선택해주세요.');
+  await addDoc(collection(db,'trips',tripId,'expenses'), { category, title, amount, memo, paidBy, participants, addedBy:currentUser.uid, createdAt:serverTimestamp() });
+  closeModal();
+  loadExpenses(tripId);
+};
+
+window.deleteExpense = async (tripId, expId) => {
+  if (!confirm('삭제하시겠습니까?')) return;
+  await deleteDoc(doc(db,'trips',tripId,'expenses',expId));
+  loadExpenses(tripId);
+};
+
+// ---- 여행 CRUD ----
+window.openTripModal = (id='') => {
+  const t=id?allTrips.find(x=>x.id===id):null;
+  openModal(`<div class="modal-hd"><span class="modal-title">${t?'여행 수정':'여행 추가'}</span><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="fg"><label class="fl">여행 제목 *</label><input class="fi" id="m-ttitle" value="${esc(t?.title||'')}"></div>
     <div class="fg"><label class="fl">시작일 *</label><input class="fi" id="m-tstart" type="date" value="${t?.dateStart||''}"></div>
     <div class="fg"><label class="fl">종료일</label><input class="fi" id="m-tend" type="date" value="${t?.dateEnd||''}"></div>
     <div class="fg"><label class="fl">장소</label><input class="fi" id="m-tloc" value="${esc(t?.location||'')}"></div>
     <div class="fg"><label class="fl">설명</label><textarea class="fi" id="m-tdesc" rows="3">${esc(t?.description||'')}</textarea></div>
-    <div class="fg"><label class="fl">상태</label>
-      <select class="fi" id="m-tstatus">
-        <option value="planned" ${t?.status!=='completed'?'selected':''}>예정</option>
-        <option value="completed" ${t?.status==='completed'?'selected':''}>완료</option>
-      </select></div>
-    <button class="btn btn-or" style="width:100%" onclick="saveTrip('${id}')">저장</button>
-  `);
+    <div class="fg"><label class="fl">상태</label><select class="fi" id="m-tstatus"><option value="planned" ${t?.status!=='completed'?'selected':''}>예정</option><option value="completed" ${t?.status==='completed'?'selected':''}>완료</option></select></div>
+    <button class="btn btn-or" style="width:100%" onclick="saveTrip('${id}')">저장</button>`);
 };
 
 window.saveTrip = async (id) => {
-  const title = document.getElementById('m-ttitle').value.trim();
-  const dateStart = document.getElementById('m-tstart').value;
-  const dateEnd = document.getElementById('m-tend').value;
-  const location = document.getElementById('m-tloc').value.trim();
-  const description = document.getElementById('m-tdesc').value.trim();
-  const status = document.getElementById('m-tstatus').value;
-  if (!title || !dateStart) return alert('제목과 시작일은 필수입니다.');
-  const data = { title, dateStart, dateEnd, location, description, status };
-  if (id) await updateDoc(doc(db,'trips',id), data);
-  else await addDoc(collection(db,'trips'), {...data, createdBy:currentUser.uid, createdAt:serverTimestamp()});
+  const title=document.getElementById('m-ttitle').value.trim(), dateStart=document.getElementById('m-tstart').value;
+  const dateEnd=document.getElementById('m-tend').value, location=document.getElementById('m-tloc').value.trim();
+  const description=document.getElementById('m-tdesc').value.trim(), status=document.getElementById('m-tstatus').value;
+  if (!title||!dateStart) return alert('제목과 시작일은 필수입니다.');
+  const data={title,dateStart,dateEnd,location,description,status};
+  if (id) await updateDoc(doc(db,'trips',id),data);
+  else await addDoc(collection(db,'trips'),{...data,createdBy:currentUser.uid,createdAt:serverTimestamp()});
   closeModal();
 };
 
 window.deleteTrip = async (tripId) => {
-  if (!confirm('여행을 삭제하시겠습니까? 앨범과 경비도 함께 삭제됩니다.')) return;
-  const [a,b,c] = await Promise.all([
-    getDocs(collection(db,'trips',tripId,'attendees')),
-    getDocs(collection(db,'trips',tripId,'albums')),
-    getDocs(collection(db,'trips',tripId,'expenses'))
-  ]);
-  const batch = writeBatch(db);
-  [...a.docs,...b.docs,...c.docs].forEach(d => batch.delete(d.ref));
+  if (!confirm('여행을 삭제하시겠습니까?')) return;
+  const [a,b,c]=await Promise.all([getDocs(collection(db,'trips',tripId,'attendees')),getDocs(collection(db,'trips',tripId,'albumItems')),getDocs(collection(db,'trips',tripId,'expenses'))]);
+  const batch=writeBatch(db);
+  [...a.docs,...b.docs,...c.docs].forEach(d=>batch.delete(d.ref));
   batch.delete(doc(db,'trips',tripId));
   await batch.commit();
   showTripList();
 };
 
-window.openAlbumModal = (tripId) => {
-  openModal(`
-    <div class="modal-hd">
-      <span class="modal-title">앨범 추가</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="fg"><label class="fl">앨범 이름 *</label><input class="fi" id="m-aname" placeholder="예: 강원도 1일차"></div>
-    <div class="fg"><label class="fl">앨범 링크 * (구글포토 / 카카오)</label><input class="fi" id="m-aurl" type="url" placeholder="https://..."></div>
-    <button class="btn btn-or" style="width:100%" onclick="saveAlbum('${tripId}')">추가</button>
-  `);
-};
-
-window.saveAlbum = async (tripId) => {
-  const title = document.getElementById('m-aname').value.trim();
-  const url = document.getElementById('m-aurl').value.trim();
-  if (!title || !url) return alert('이름과 링크를 입력해주세요.');
-  await addDoc(collection(db,'trips',tripId,'albums'), {title, url, addedBy:currentUser.uid, addedAt:serverTimestamp()});
-  closeModal();
-  showTripDetail(tripId);
-};
-
-window.deleteAlbum = async (tripId, albumId) => {
-  if (!confirm('앨범을 삭제하시겠습니까?')) return;
-  await deleteDoc(doc(db,'trips',tripId,'albums',albumId));
-  showTripDetail(tripId);
-};
-
-window.openExpenseModal = (tripId) => {
-  const userOpts = Object.entries(allUsers).map(([uid,u]) => `
-    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
-      <input type="checkbox" class="exp-chk" value="${uid}" checked>
-      ${esc(u.nick)} (${esc(u.realname)})
-    </label>
-  `).join('');
-  openModal(`
-    <div class="modal-hd">
-      <span class="modal-title">경비 추가</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="fg"><label class="fl">항목 이름 *</label><input class="fi" id="m-ename" placeholder="예: 저녁 식사"></div>
-    <div class="fg"><label class="fl">금액 (원) *</label><input class="fi" id="m-eamt" type="number" placeholder="0" oninput="calcExpPrev()"></div>
-    <div class="fg"><label class="fl">참여 인원</label>
-      <div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px" id="exp-user-list">${userOpts}</div>
-    </div>
-    <div id="m-eprev" style="background:#FFF3ED;padding:10px;border-radius:8px;margin-bottom:12px;font-size:13px;display:none"></div>
-    <button class="btn btn-or" style="width:100%" onclick="saveExpense('${tripId}')">추가</button>
-  `);
-};
-
-window.calcExpPrev = () => {
-  const amt = parseInt(document.getElementById('m-eamt').value)||0;
-  const n = document.querySelectorAll('.exp-chk:checked').length;
-  const prev = document.getElementById('m-eprev');
-  if (amt > 0 && n > 0) { prev.style.display=''; prev.innerHTML=`${won(amt)} ÷ ${n}명 = <strong>${won(Math.ceil(amt/n))}/인</strong>`; }
-  else prev.style.display='none';
-};
-
-window.saveExpense = async (tripId) => {
-  const title = document.getElementById('m-ename').value.trim();
-  const amount = parseInt(document.getElementById('m-eamt').value)||0;
-  const participants = [...document.querySelectorAll('.exp-chk:checked')].map(c=>c.value);
-  if (!title || amount<=0) return alert('항목 이름과 금액을 입력해주세요.');
-  if (!participants.length) return alert('참여 인원을 선택해주세요.');
-  await addDoc(collection(db,'trips',tripId,'expenses'), {title, amount, participants, addedBy:currentUser.uid, addedAt:serverTimestamp()});
-  closeModal();
-  showTripDetail(tripId);
-};
-
-window.deleteExpense = async (tripId, expId) => {
-  if (!confirm('경비를 삭제하시겠습니까?')) return;
-  await deleteDoc(doc(db,'trips',tripId,'expenses',expId));
-  showTripDetail(tripId);
-};
-
-// ============ VOTES ============
+// ========== VOTES ==========
 function renderVotesData(votes) {
-  const list = document.getElementById('votes-list');
-  if (!votes.length) { list.innerHTML = `<div class="empty"><div class="empty-icon">🗳️</div>진행 중인 투표가 없습니다.</div>`; return; }
-  const adm = currentUserDoc?.isAdmin;
-  list.innerHTML = votes.map(v => {
-    const ended = v.endDate && new Date(v.endDate) < new Date();
-    return `
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div>
-            <span class="badge ${ended?'b-gy':'b-gr'}">${ended?'마감':'진행중'}</span>
-            <div class="card-title" style="margin-top:6px">${esc(v.title)}</div>
-            ${v.description?`<div class="card-sub">${esc(v.description)}</div>`:''}
-            <div class="card-sub">마감: ${v.endDate||'미정'}</div>
-          </div>
-          ${adm?`<button class="btn btn-gray btn-sm" onclick="deleteVote('${v.id}')">삭제</button>`:''}
+  const list=document.getElementById('votes-list');
+  if (!votes.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">🗳️</div>진행 중인 투표가 없습니다.</div>`; return; }
+  const adm=currentUserDoc?.isAdmin;
+  list.innerHTML=votes.map(v=>{
+    const ended=v.endDate&&new Date(v.endDate)<new Date();
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="badge ${ended?'b-gy':'b-gr'}">${ended?'마감':'진행중'}</span>
+          <div class="card-title" style="margin-top:6px">${esc(v.title)}</div>
+          ${v.description?`<div class="card-sub">${esc(v.description)}</div>`:''}
+          <div class="card-sub">마감: ${v.endDate||'미정'}</div>
         </div>
-        <div id="cands-${v.id}" style="margin-top:12px"><div class="card-sub">후보 로딩 중...</div></div>
-        <button class="btn btn-out btn-sm" style="margin-top:10px" onclick="openCandidateModal('${v.id}')">+ 후보 추가</button>
+        ${adm?`<button class="btn btn-gray btn-sm" onclick="deleteVote('${v.id}')">삭제</button>`:''}
       </div>
-    `;
+      <div id="cands-${v.id}" style="margin-top:12px"><div class="card-sub">로딩 중...</div></div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-out btn-sm" onclick="openCandidateModal('${v.id}')">+ 후보 추가</button>
+        <button class="btn btn-gray btn-sm" onclick="openImportModal('${v.id}')">📊 엑셀/시트 가져오기</button>
+      </div>
+    </div>`;
   }).join('');
-  votes.forEach(v => loadCandidates(v.id, v.endDate));
+  votes.forEach(v=>loadCandidates(v.id,v.endDate));
 }
 
-async function loadCandidates(voteId, endDate) {
-  const snap = await getDocs(collection(db,'votes',voteId,'candidates'));
-  const cands = snap.docs.map(d => ({id:d.id,...d.data()}));
-  const el = document.getElementById(`cands-${voteId}`);
-  if (!el) return;
-  if (!cands.length) { el.innerHTML = '<div class="card-sub">후보가 없습니다.</div>'; return; }
-  const total = cands.reduce((s,c)=>s+(c.voters?.length||0),0);
-  const ended = endDate && new Date(endDate) < new Date();
-  const adm = currentUserDoc?.isAdmin;
-  el.innerHTML = cands.map(c => {
-    const cnt = c.voters?.length||0;
-    const pct = total>0 ? Math.round(cnt/total*100) : 0;
-    const voted = c.voters?.includes(currentUser.uid);
-    return `
-      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-size:14px;font-weight:700">${esc(c.name)}</div>
-            ${c.description?`<div style="font-size:12px;color:var(--sub)">${esc(c.description)}</div>`:''}
-            ${c.naverMapUrl?`<a href="${esc(c.naverMapUrl)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--primary);text-decoration:none">🗺️ 네이버 지도 보기</a>`:''}
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-            <span style="font-size:13px;font-weight:700">${cnt}표 (${pct}%)</span>
-            ${!ended?`<button class="btn btn-sm ${voted?'btn-or':'btn-out'}" onclick="castVote('${voteId}','${c.id}',${voted},'${endDate||''}')">
-              ${voted?'✓ 투표함':'투표'}
-            </button>`:''}
-          </div>
+async function loadCandidates(voteId,endDate) {
+  const snap=await getDocs(collection(db,'votes',voteId,'candidates'));
+  const cands=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const el=document.getElementById('cands-'+voteId); if(!el) return;
+  if (!cands.length){el.innerHTML='<div class="card-sub">후보가 없습니다.</div>';return;}
+  const total=cands.reduce((s,c)=>s+(c.voters?.length||0),0);
+  const ended=endDate&&new Date(endDate)<new Date();
+  el.innerHTML=cands.map(c=>{
+    const cnt=c.voters?.length||0, pct=total>0?Math.round(cnt/total*100):0, voted=c.voters?.includes(currentUser.uid);
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:14px;font-weight:700">${esc(c.name)}</div>
+          ${c.description?`<div style="font-size:12px;color:var(--sub)">${esc(c.description)}</div>`:''}
+          ${c.naverMapUrl?`<a href="${esc(c.naverMapUrl)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--primary);text-decoration:none">🗺️ 네이버 지도 보기</a>`:''}
         </div>
-        <div class="vote-bar"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
-        ${adm?`<button class="btn btn-gray btn-sm" style="margin-top:6px" onclick="deleteCandidate('${voteId}','${c.id}')">삭제</button>`:''}
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span style="font-size:13px;font-weight:700">${cnt}표 (${pct}%)</span>
+          ${!ended?`<button class="btn btn-sm ${voted?'btn-or':'btn-out'}" onclick="castVote('${voteId}','${c.id}',${voted},'${endDate||''}')">${voted?'✓ 투표함':'투표'}</button>`:''}
+        </div>
       </div>
-    `;
+      <div class="vote-bar"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
+      ${currentUserDoc?.isAdmin?`<button class="btn btn-gray btn-sm" style="margin-top:6px" onclick="deleteCandidate('${voteId}','${c.id}')">삭제</button>`:''}
+    </div>`;
   }).join('');
 }
 
-window.castVote = async (voteId, candId, hasVoted, endDate) => {
-  if (endDate && new Date(endDate) < new Date()) return alert('투표가 마감되었습니다.');
-  const ref = doc(db,'votes',voteId,'candidates',candId);
-  await updateDoc(ref, { voters: hasVoted ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid) });
-  const v = document.querySelector(`#cands-${voteId}`)?.closest('.card');
-  loadCandidates(voteId, endDate);
-};
-
-window.openVoteModal = () => {
-  openModal(`
-    <div class="modal-hd">
-      <span class="modal-title">투표 생성</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+window.openImportModal = (voteId) => {
+  openModal(`<div class="modal-hd"><span class="modal-title">📊 후보 가져오기</span><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <p style="font-size:13px;color:var(--sub);margin-bottom:16px">엑셀/CSV 파일 또는 공개된 구글 시트 URL로 후보를 한번에 추가할 수 있어요.</p>
+    <div style="background:#FFF3ED;border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--sub)">
+      📋 <strong>파일 형식:</strong> A열=후보지이름, B열=설명(선택), C열=네이버지도링크(선택)<br>
+      📋 <strong>구글 시트:</strong> 파일 → 공유 → 링크 있는 모든 사용자로 설정 후 URL 붙여넣기
     </div>
-    <div class="fg"><label class="fl">투표 제목 *</label><input class="fi" id="m-vtitle" placeholder="예: 다음 여행지 투표"></div>
-    <div class="fg"><label class="fl">설명</label><input class="fi" id="m-vdesc" placeholder="설명 (선택)"></div>
-    <div class="fg"><label class="fl">마감일</label><input class="fi" id="m-vend" type="date"></div>
-    <button class="btn btn-or" style="width:100%" onclick="saveVote()">생성</button>
-  `);
-};
-
-window.saveVote = async () => {
-  const title = document.getElementById('m-vtitle').value.trim();
-  const description = document.getElementById('m-vdesc').value.trim();
-  const endDate = document.getElementById('m-vend').value;
-  if (!title) return alert('제목을 입력해주세요.');
-  await addDoc(collection(db,'votes'), {title, description, endDate, createdBy:currentUser.uid, createdAt:serverTimestamp()});
-  closeModal();
-};
-
-window.deleteVote = async (voteId) => {
-  if (!confirm('투표를 삭제하시겠습니까?')) return;
-  const snap = await getDocs(collection(db,'votes',voteId,'candidates'));
-  const batch = writeBatch(db);
-  snap.docs.forEach(d => batch.delete(d.ref));
-  batch.delete(doc(db,'votes',voteId));
-  await batch.commit();
-};
-
-window.openCandidateModal = (voteId) => {
-  openModal(`
-    <div class="modal-hd">
-      <span class="modal-title">후보 추가</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="fg">
+      <label class="fl">📁 파일 업로드 (Excel / CSV)</label>
+      <input type="file" id="import-file" class="fi" accept=".xlsx,.xls,.csv" style="padding:8px">
     </div>
-    <div class="fg"><label class="fl">후보 이름 *</label><input class="fi" id="m-cname" placeholder="예: 강원도 속초"></div>
-    <div class="fg"><label class="fl">설명</label><input class="fi" id="m-cdesc" placeholder="간단한 설명 (선택)"></div>
-    <div class="fg"><label class="fl">네이버 지도 링크</label><input class="fi" id="m-cmap" type="url" placeholder="https://map.naver.com/..."></div>
-    <button class="btn btn-or" style="width:100%" onclick="saveCandidate('${voteId}')">추가</button>
-  `);
+    <div style="text-align:center;margin:8px 0;color:var(--sub);font-size:13px">— 또는 —</div>
+    <div class="fg">
+      <label class="fl">🔗 구글 시트 URL</label>
+      <input class="fi" id="import-sheet-url" placeholder="https://docs.google.com/spreadsheets/d/...">
+    </div>
+    <div id="import-preview" style="display:none;margin-bottom:12px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px">미리보기</div>
+      <div id="import-preview-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-gray" style="flex:1" onclick="previewImport()">미리보기</button>
+      <button class="btn btn-or" style="flex:1" id="import-confirm-btn" onclick="confirmImport('${voteId}')" disabled>가져오기</button>
+    </div>
+    <div id="import-msg" style="margin-top:8px"></div>`);
 };
 
-window.saveCandidate = async (voteId) => {
-  const name = document.getElementById('m-cname').value.trim();
-  const description = document.getElementById('m-cdesc').value.trim();
-  const naverMapUrl = document.getElementById('m-cmap').value.trim();
-  if (!name) return alert('후보 이름을 입력해주세요.');
-  await addDoc(collection(db,'votes',voteId,'candidates'), {name, description, naverMapUrl, voters:[]});
-  closeModal();
-  loadCandidates(voteId, '');
+let importedCandidates = [];
+
+window.previewImport = async () => {
+  importedCandidates = [];
+  const file = document.getElementById('import-file')?.files[0];
+  const sheetUrl = document.getElementById('import-sheet-url')?.value.trim();
+  const msg = document.getElementById('import-msg');
+  msg.innerHTML = '';
+
+  try {
+    let rows = [];
+    if (file) {
+      rows = await parseFile(file);
+    } else if (sheetUrl) {
+      rows = await fetchGoogleSheet(sheetUrl);
+    } else {
+      msg.innerHTML = '<div class="auth-msg err">파일을 선택하거나 URL을 입력해주세요.</div>'; return;
+    }
+
+    // 첫 행이 헤더인지 확인 (숫자가 없으면 헤더로 간주)
+    if (rows.length > 1 && isNaN(rows[0][0]) && typeof rows[0][0] === 'string' && rows[0][0].length < 5) {
+      rows = rows.slice(1);
+    }
+
+    importedCandidates = rows.filter(r => r[0]).map(r => ({
+      name: String(r[0]||'').trim(),
+      description: String(r[1]||'').trim(),
+      naverMapUrl: String(r[2]||'').trim(),
+    })).filter(c => c.name);
+
+    if (!importedCandidates.length) { msg.innerHTML='<div class="auth-msg err">가져올 후보가 없습니다. 파일 형식을 확인해주세요.</div>'; return; }
+
+    const preview = document.getElementById('import-preview');
+    const list = document.getElementById('import-preview-list');
+    preview.style.display = '';
+    list.innerHTML = importedCandidates.map((c,i) => `
+      <div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span style="color:var(--sub);margin-right:6px">${i+1}.</span>
+        <strong>${esc(c.name)}</strong>
+        ${c.description?`<span style="color:var(--sub)"> · ${esc(c.description)}</span>`:''}
+        ${c.naverMapUrl?`<span style="color:var(--primary)"> 🗺️</span>`:''}
+      </div>`).join('');
+
+    document.getElementById('import-confirm-btn').disabled = false;
+    msg.innerHTML = `<div class="auth-msg ok">${importedCandidates.length}개 후보 확인됨</div>`;
+  } catch(e) {
+    msg.innerHTML = `<div class="auth-msg err">오류: ${e.message}</div>`;
+  }
 };
 
-window.deleteCandidate = async (voteId, candId) => {
-  if (!confirm('후보를 삭제하시겠습니까?')) return;
-  await deleteDoc(doc(db,'votes',voteId,'candidates',candId));
-  loadCandidates(voteId, '');
+async function parseFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        resolve(rows);
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('파일 읽기 실패'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function fetchGoogleSheet(url) {
+  // 구글시트 URL → CSV export URL 변환
+  const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (!match) throw new Error('올바른 구글 시트 URL이 아닙니다.');
+  const sheetId = match[1];
+  const gidMatch = url.match(/gid=(\d+)/);
+  const gid = gidMatch ? gidMatch[1] : '0';
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+  const resp = await fetch(csvUrl);
+  if (!resp.ok) throw new Error('구글 시트를 가져올 수 없습니다. 공개 공유 설정을 확인해주세요.');
+  const text = await resp.text();
+  return text.split('\n').map(line => line.split(',').map(cell => cell.replace(/^"|"$/g,'').trim()));
+}
+
+window.confirmImport = async (voteId) => {
+  if (!importedCandidates.length) return;
+  const btn = document.getElementById('import-confirm-btn');
+  btn.disabled = true; btn.textContent = '추가 중...';
+  try {
+    for (const c of importedCandidates) {
+      await addDoc(collection(db,'votes',voteId,'candidates'), { name:c.name, description:c.description, naverMapUrl:c.naverMapUrl, voters:[] });
+    }
+    closeModal();
+    loadCandidates(voteId, '');
+  } catch(e) {
+    document.getElementById('import-msg').innerHTML = `<div class="auth-msg err">오류: ${e.message}</div>`;
+    btn.disabled = false; btn.textContent = '가져오기';
+  }
 };
 
-// ============ MY PAGE ============
+window.castVote=async(vId,cId,hasVoted,endDate)=>{ if(endDate&&new Date(endDate)<new Date()) return alert('투표가 마감되었습니다.'); await updateDoc(doc(db,'votes',vId,'candidates',cId),{voters:hasVoted?arrayRemove(currentUser.uid):arrayUnion(currentUser.uid)}); loadCandidates(vId,endDate); };
+window.openVoteModal=()=>{ openModal(`<div class="modal-hd"><span class="modal-title">투표 생성</span><button class="modal-close" onclick="closeModal()">✕</button></div><div class="fg"><label class="fl">투표 제목 *</label><input class="fi" id="m-vtitle" placeholder="예: 다음 여행지 투표"></div><div class="fg"><label class="fl">설명</label><input class="fi" id="m-vdesc"></div><div class="fg"><label class="fl">마감일</label><input class="fi" id="m-vend" type="date"></div><button class="btn btn-or" style="width:100%" onclick="saveVote()">생성</button>`); };
+window.saveVote=async()=>{ const title=document.getElementById('m-vtitle').value.trim(); if(!title) return alert('제목을 입력해주세요.'); await addDoc(collection(db,'votes'),{title,description:document.getElementById('m-vdesc').value.trim(),endDate:document.getElementById('m-vend').value,createdBy:currentUser.uid,createdAt:serverTimestamp()}); closeModal(); };
+window.deleteVote=async(vId)=>{ if(!confirm('삭제하시겠습니까?')) return; const snap=await getDocs(collection(db,'votes',vId,'candidates')); const b=writeBatch(db); snap.docs.forEach(d=>b.delete(d.ref)); b.delete(doc(db,'votes',vId)); await b.commit(); };
+window.openCandidateModal=(vId)=>{ openModal(`<div class="modal-hd"><span class="modal-title">후보 추가</span><button class="modal-close" onclick="closeModal()">✕</button></div><div class="fg"><label class="fl">후보 이름 *</label><input class="fi" id="m-cname" placeholder="예: 강원도 속초"></div><div class="fg"><label class="fl">설명</label><input class="fi" id="m-cdesc"></div><div class="fg"><label class="fl">네이버 지도 링크</label><input class="fi" id="m-cmap" type="url" placeholder="https://map.naver.com/..."></div><button class="btn btn-or" style="width:100%" onclick="saveCandidate('${vId}')">추가</button>`); };
+window.saveCandidate=async(vId)=>{ const name=document.getElementById('m-cname').value.trim(); if(!name) return alert('이름을 입력해주세요.'); await addDoc(collection(db,'votes',vId,'candidates'),{name,description:document.getElementById('m-cdesc').value.trim(),naverMapUrl:document.getElementById('m-cmap').value.trim(),voters:[]}); closeModal(); loadCandidates(vId,''); };
+window.deleteCandidate=async(vId,cId)=>{ if(!confirm('삭제하시겠습니까?')) return; await deleteDoc(doc(db,'votes',vId,'candidates',cId)); loadCandidates(vId,''); };
+
+// ========== MY PAGE ==========
 function renderMyPage() {
-  const u = currentUserDoc;
-  if (!u) return;
-  document.getElementById('my-profile-card').innerHTML = `
+  const u=currentUserDoc; if(!u) return;
+  document.getElementById('my-profile-card').innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div>
         <div style="font-size:20px;font-weight:800">${esc(u.nick)}</div>
         <div class="card-sub">${esc(u.realname)}</div>
         <div class="card-sub">${esc(u.email)}</div>
         ${u.phone?`<div class="card-sub">📱 ${esc(u.phone)}</div>`:''}
+        ${u.bankName||u.accountNum?`<div class="card-sub" style="margin-top:6px">🏦 ${esc(u.bankName||'')} ${esc(u.accountNum||'')}${u.accountHolder?' · '+esc(u.accountHolder):''}</div>`:'<div class="card-sub" style="margin-top:6px;color:#FFAA80">🏦 계좌 정보 미등록 (수정에서 추가)</div>'}
         ${u.isAdmin?'<span class="badge b-or" style="margin-top:6px;display:inline-block">관리자</span>':''}
       </div>
       <button class="btn btn-gray btn-sm" onclick="openEditProfileModal()">수정</button>
-    </div>
-  `;
+    </div>`;
   renderChildren();
 }
 
 function renderChildren() {
-  const children = currentUserDoc?.children || [];
-  const list = document.getElementById('children-list');
-  if (!children.length) { list.innerHTML = `<div class="card"><div class="card-sub">등록된 아이가 없습니다.</div></div>`; return; }
-  list.innerHTML = children.map((c,i) => `
+  const children=currentUserDoc?.children||[], list=document.getElementById('children-list');
+  if (!children.length){list.innerHTML=`<div class="card"><div class="card-sub">등록된 아이가 없습니다.</div></div>`;return;}
+  list.innerHTML=children.map((c,i)=>`
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
@@ -1046,105 +1289,47 @@ function renderChildren() {
           <button class="btn btn-red btn-sm" onclick="deleteChild(${i})">삭제</button>
         </div>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-window.openEditProfileModal = () => {
-  const u = currentUserDoc;
+window.openEditProfileModal=()=>{
+  const u=currentUserDoc;
   openModal(`
-    <div class="modal-hd">
-      <span class="modal-title">프로필 수정</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
+    <div class="modal-hd"><span class="modal-title">프로필 수정</span><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="fg"><label class="fl">별명</label><input class="fi" id="m-enick" value="${esc(u.nick)}"></div>
     <div class="fg"><label class="fl">연락처</label><input class="fi" id="m-ephone" value="${esc(u.phone||'')}"></div>
-    <button class="btn btn-or" style="width:100%" onclick="saveProfile()">저장</button>
-  `);
+    <div style="margin:14px 0 8px;font-weight:700;font-size:14px;color:var(--text)">🏦 계좌 정보 (정산 시 표시)</div>
+    <div class="fg"><label class="fl">은행명</label><input class="fi" id="m-ebank" value="${esc(u.bankName||'')}" placeholder="예: 국민은행, 카카오뱅크"></div>
+    <div class="fg"><label class="fl">계좌번호</label><input class="fi" id="m-eaccnum" value="${esc(u.accountNum||'')}" placeholder="예: 123-456-789012"></div>
+    <div class="fg"><label class="fl">예금주</label><input class="fi" id="m-eaccholder" value="${esc(u.accountHolder||'')}" placeholder="예: 홍길동"></div>
+    <button class="btn btn-or" style="width:100%" onclick="saveProfile()">저장</button>`);
+};
+window.saveProfile=async()=>{
+  const nick=document.getElementById('m-enick').value.trim();
+  const phone=document.getElementById('m-ephone').value.trim();
+  const bankName=document.getElementById('m-ebank').value.trim();
+  const accountNum=document.getElementById('m-eaccnum').value.trim();
+  const accountHolder=document.getElementById('m-eaccholder').value.trim();
+  if(!nick) return alert('별명을 입력해주세요.');
+  await updateDoc(doc(db,'users',currentUser.uid),{nick,phone,bankName,accountNum,accountHolder});
+  currentUserDoc={...currentUserDoc,nick,phone,bankName,accountNum,accountHolder};
+  allUsers[currentUser.uid]={...allUsers[currentUser.uid],nick,phone,bankName,accountNum,accountHolder};
+  closeModal(); renderMyPage(); document.getElementById('header-user').textContent=nick+' 님';
 };
 
-window.saveProfile = async () => {
-  const nick = document.getElementById('m-enick').value.trim();
-  const phone = document.getElementById('m-ephone').value.trim();
-  if (!nick) return alert('별명을 입력해주세요.');
-  await updateDoc(doc(db,'users',currentUser.uid), {nick, phone});
-  currentUserDoc = {...currentUserDoc, nick, phone};
-  allUsers[currentUser.uid] = {...allUsers[currentUser.uid], nick, phone};
-  closeModal();
-  renderMyPage();
-  document.getElementById('header-user').textContent = nick + ' 님';
-};
+window.openChildModal=(idx=null)=>{ const c=idx!==null?currentUserDoc.children[idx]:null; openModal(`<div class="modal-hd"><span class="modal-title">${c?'아이 정보 수정':'아이 추가'}</span><button class="modal-close" onclick="closeModal()">✕</button></div><div class="fg"><label class="fl">이름 *</label><input class="fi" id="m-kname" value="${esc(c?.name||'')}"></div><div class="fg"><label class="fl">생년월일 *</label><input class="fi" id="m-kbirth" type="date" value="${c?.birthdate||''}"></div><div class="fg"><label class="fl">성별 *</label><select class="fi" id="m-kgender"><option value="남" ${c?.gender==='남'?'selected':''}>남</option><option value="여" ${c?.gender==='여'?'selected':''}>여</option></select></div><button class="btn btn-or" style="width:100%" onclick="saveChild(${idx})">저장</button>`); };
+window.saveChild=async(idx)=>{ const name=document.getElementById('m-kname').value.trim(), birthdate=document.getElementById('m-kbirth').value, gender=document.getElementById('m-kgender').value; if(!name||!birthdate) return alert('이름과 생년월일을 입력해주세요.'); const children=[...(currentUserDoc.children||[])]; const child={name,birthdate,gender}; if(idx!==null) children[idx]=child; else children.push(child); await updateDoc(doc(db,'users',currentUser.uid),{children}); currentUserDoc={...currentUserDoc,children}; closeModal(); renderChildren(); };
+window.deleteChild=async(idx)=>{ if(!confirm('삭제하시겠습니까?')) return; const children=[...(currentUserDoc.children||[])]; children.splice(idx,1); await updateDoc(doc(db,'users',currentUser.uid),{children}); currentUserDoc={...currentUserDoc,children}; renderChildren(); };
 
-window.openChildModal = (idx = null) => {
-  const c = idx !== null ? currentUserDoc.children[idx] : null;
-  openModal(`
-    <div class="modal-hd">
-      <span class="modal-title">${c?'아이 정보 수정':'아이 추가'}</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="fg"><label class="fl">이름 *</label><input class="fi" id="m-kname" value="${esc(c?.name||'')}"></div>
-    <div class="fg"><label class="fl">생년월일 *</label><input class="fi" id="m-kbirth" type="date" value="${c?.birthdate||''}"></div>
-    <div class="fg"><label class="fl">성별 *</label>
-      <select class="fi" id="m-kgender">
-        <option value="남" ${c?.gender==='남'?'selected':''}>남</option>
-        <option value="여" ${c?.gender==='여'?'selected':''}>여</option>
-      </select></div>
-    <button class="btn btn-or" style="width:100%" onclick="saveChild(${idx})">저장</button>
-  `);
-};
+window.doLogout=async()=>{ if(!confirm('로그아웃 하시겠습니까?')) return; if(unsubNotices)unsubNotices(); if(unsubTrips)unsubTrips(); if(unsubVotes)unsubVotes(); await signOut(auth); };
+window.doWithdraw=async()=>{ const pw=prompt('탈퇴하려면 현재 비밀번호를 입력해주세요:'); if(!pw) return; try { const cred=EmailAuthProvider.credential(currentUser.email,pw); await reauthenticateWithCredential(currentUser,cred); await updateDoc(doc(db,'users',currentUser.uid),{active:false}); await deleteUser(currentUser); alert('탈퇴가 완료되었습니다.'); } catch(e){ alert('탈퇴 실패: '+(e.code==='auth/wrong-password'?'비밀번호가 틀렸습니다.':e.message)); } };
 
-window.saveChild = async (idx) => {
-  const name = document.getElementById('m-kname').value.trim();
-  const birthdate = document.getElementById('m-kbirth').value;
-  const gender = document.getElementById('m-kgender').value;
-  if (!name || !birthdate) return alert('이름과 생년월일을 입력해주세요.');
-  const children = [...(currentUserDoc.children||[])];
-  const child = {name, birthdate, gender};
-  if (idx !== null) children[idx] = child;
-  else children.push(child);
-  await updateDoc(doc(db,'users',currentUser.uid), {children});
-  currentUserDoc = {...currentUserDoc, children};
-  closeModal();
-  renderChildren();
-};
-
-window.deleteChild = async (idx) => {
-  if (!confirm('아이 정보를 삭제하시겠습니까?')) return;
-  const children = [...(currentUserDoc.children||[])];
-  children.splice(idx, 1);
-  await updateDoc(doc(db,'users',currentUser.uid), {children});
-  currentUserDoc = {...currentUserDoc, children};
-  renderChildren();
-};
-
-window.doLogout = async () => {
-  if (!confirm('로그아웃 하시겠습니까?')) return;
-  if (unsubNotices) unsubNotices();
-  if (unsubTrips) unsubTrips();
-  if (unsubVotes) unsubVotes();
-  await signOut(auth);
-};
-
-window.doWithdraw = async () => {
-  const pw = prompt('탈퇴하려면 현재 비밀번호를 입력해주세요:');
-  if (!pw) return;
-  try {
-    const cred = EmailAuthProvider.credential(currentUser.email, pw);
-    await reauthenticateWithCredential(currentUser, cred);
-    await updateDoc(doc(db,'users',currentUser.uid), {active: false});
-    await deleteUser(currentUser);
-    alert('탈퇴가 완료되었습니다.');
-  } catch (e) {
-    alert('탈퇴 실패: ' + (e.code==='auth/wrong-password'?'비밀번호가 틀렸습니다.':e.message));
-  }
-};
-
-// ============ ADMIN ============
+// ========== ADMIN ==========
 async function renderAdminMembers() {
   if (!currentUserDoc?.isAdmin) return;
-  const snap = await getDocs(query(collection(db,'users'), where('active','==',true)));
-  const users = snap.docs.map(d => ({id:d.id,...d.data()}));
-  document.getElementById('admin-members').innerHTML = users.map(u => `
+  const snap=await getDocs(query(collection(db,'users'),where('active','==',true)));
+  const users=snap.docs.map(d=>({id:d.id,...d.data()}));
+  document.getElementById('admin-members').innerHTML=users.map(u=>`
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
@@ -1155,50 +1340,30 @@ async function renderAdminMembers() {
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
           ${u.isAdmin?'<span class="badge b-or">관리자</span>':''}
-          ${u.id!==currentUser.uid?`
-            <button class="btn btn-sm ${u.isAdmin?'btn-gray':'btn-out'}" onclick="toggleAdmin('${u.id}',${u.isAdmin})">
-              ${u.isAdmin?'관리자 해제':'관리자 승격'}
-            </button>
-          `:'<span class="badge b-gy">나</span>'}
+          ${u.id!==currentUser.uid?`<button class="btn btn-sm ${u.isAdmin?'btn-gray':'btn-out'}" onclick="toggleAdmin('${u.id}',${u.isAdmin})">${u.isAdmin?'관리자 해제':'관리자 승격'}</button>`:'<span class="badge b-gy">나</span>'}
         </div>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-window.toggleAdmin = async (uid, isAdmin) => {
-  if (!confirm(isAdmin ? '관리자를 해제하시겠습니까?' : '관리자로 승격하시겠습니까?')) return;
-  await updateDoc(doc(db,'users',uid), {isAdmin: !isAdmin});
-  allUsers[uid] = {...allUsers[uid], isAdmin: !isAdmin};
-  renderAdminMembers();
+window.toggleSettleDetail = (uid) => {
+  const el = document.getElementById('settle-detail-'+uid);
+  if (el) el.classList.toggle('open');
 };
 
-// ============ MODAL ============
-function openModal(html) {
-  document.getElementById('modal-container').innerHTML =
-    `<div class="modal-overlay" onclick="handleOverlay(event)"><div class="modal-box">${html}</div></div>`;
-}
-window.closeModal = () => { document.getElementById('modal-container').innerHTML = ''; };
-window.handleOverlay = (e) => { if (e.target.classList.contains('modal-overlay')) closeModal(); };
+window.toggleAdmin=async(uid,isAdmin)=>{ if(!confirm(isAdmin?'관리자를 해제하시겠습니까?':'관리자로 승격하시겠습니까?')) return; await updateDoc(doc(db,'users',uid),{isAdmin:!isAdmin}); allUsers[uid]={...allUsers[uid],isAdmin:!isAdmin}; renderAdminMembers(); };
 
-// ============ UTILS ============
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function fmtDate(ts) {
-  if (!ts) return '';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric'});
-}
-function won(n) { return Number(n).toLocaleString('ko-KR') + '원'; }
-function calcAge(bd) {
-  if (!bd) return '?';
-  const t = new Date(), b = new Date(bd);
-  let a = t.getFullYear() - b.getFullYear();
-  if (t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate())) a--;
-  return a;
-}
+// ========== MODAL ==========
+function openModal(html) { document.getElementById('modal-container').innerHTML=`<div class="modal-overlay" onclick="handleOverlay(event)"><div class="modal-box">${html}</div></div>`; }
+window.closeModal=()=>{ document.getElementById('modal-container').innerHTML=''; };
+window.handleOverlay=(e)=>{ if(e.target.classList.contains('modal-overlay')) closeModal(); };
+
+// ========== UTILS ==========
+function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(ts){ if(!ts) return ''; const d=ts.toDate?ts.toDate():new Date(ts); return d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'}); }
+function fmtDateShort(ts){ if(!ts) return ''; const d=ts.toDate?ts.toDate():new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function won(n){ return Number(n).toLocaleString('ko-KR')+'원'; }
+function calcAge(bd){ if(!bd) return '?'; const t=new Date(),b=new Date(bd); let a=t.getFullYear()-b.getFullYear(); if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate())) a--; return a; }
 </script>
 </body>
 </html>
