@@ -149,6 +149,7 @@
     .final-settle-header { background: linear-gradient(135deg, #FF6B35, #FF9A5A); color: white; padding: 14px 16px; }
     .final-settle-body { background: white; padding: 14px 16px; }
     .transfer-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #F5F5F5; flex-wrap: wrap; }
+    .transfer-row.my-txn { background:#FFF9F0; border-radius:8px; padding:10px 8px; margin: 2px -8px; }
     .transfer-from { background: #FEE2E2; color: #DC2626; padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 13px; }
     .transfer-to { background: #DCFCE7; color: #16A34A; padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 13px; }
     .transfer-amt { font-size: 16px; font-weight: 800; color: var(--primary); }
@@ -367,6 +368,7 @@ let currentUser = null, currentUserDoc = null;
 let noticeFilter = 'all', tripFilter = 'all';
 let allNotices = [], allTrips = [], allUsers = {};
 let currentTripId = null;
+let currentTripAttendees = {}; // uid → allUsers data (참석자만)
 let unsubNotices = null, unsubTrips = null, unsubVotes = null;
 
 // ========== AUTH ==========
@@ -688,6 +690,9 @@ async function loadAttendance(tripId) {
     const snap = await getDocs(collection(db,'trips',tripId,'attendees'));
     const attendees = {};
     snap.docs.forEach(d=>{ attendees[d.id]=d.data(); });
+    // 참석자 목록 갱신 (경비/준비물 모달에서 사용)
+    currentTripAttendees = {};
+    Object.entries(attendees).forEach(([uid,v]) => { if (v.attending && allUsers[uid]) currentTripAttendees[uid]=allUsers[uid]; });
     const myAtt = attendees[currentUser.uid];
     const yesAtt = Object.entries(attendees).filter(([,v])=>v.attending);
     const noAtt = Object.entries(attendees).filter(([,v])=>!v.attending);
@@ -740,7 +745,8 @@ async function loadSupplies(tripId) {
 }
 
 window.openSupplyModal = (tripId) => {
-  const userOpts = Object.entries(allUsers).map(([uid,u]) =>
+  const supBase = Object.keys(currentTripAttendees).length > 0 ? currentTripAttendees : allUsers;
+  const userOpts = Object.entries(supBase).map(([uid,u]) =>
     `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
       <input type="checkbox" class="sup-chk" value="${uid}">
       <span>${esc(u.nick)}</span><span style="color:var(--sub);font-size:12px">${esc(u.realname)}</span>
@@ -1001,6 +1007,55 @@ async function loadExpenses(tripId) {
         </div>
       </div>
 
+      <div class="card">
+        <div style="font-weight:800;font-size:15px;margin-bottom:4px">📋 경비별 정산 내역</div>
+        <div style="font-size:12px;color:var(--sub);margin-bottom:12px">항목을 눌러 상세 정산 내역 확인</div>
+        ${expenses.map((e, idx) => {
+          const payer = e.paidBy || e.addedBy;
+          const payerUser = allUsers[payer] || {};
+          const share = Math.round(e.amount / (e.participants?.length || 1));
+          const debtors = (e.participants || []).filter(uid => uid !== payer);
+          return `
+          <div style="border:1px solid #F0F0F0;border-radius:10px;margin-bottom:8px;overflow:hidden">
+            <div onclick="toggleExpenseSettle('exp-settle-${idx}')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;background:#FAFAFA">
+              <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
+                <span style="font-size:11px;background:#F0F0F0;border-radius:4px;padding:1px 6px;white-space:nowrap">${esc(e.category||'🛒 기타')}</span>
+                <span style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.title)}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-left:8px;flex-shrink:0">
+                <span style="font-weight:800;color:var(--primary)">${won(e.amount)}</span>
+                <span style="color:var(--sub);font-size:12px">▾</span>
+              </div>
+            </div>
+            <div id="exp-settle-${idx}" style="display:none;padding:10px 12px">
+              <div style="font-size:12px;color:var(--sub);margin-bottom:8px">
+                결제자: <strong style="color:var(--primary)">${esc(payerUser.nick||payer)}</strong> · 1인 부담 ${won(share)}
+              </div>
+              ${debtors.length === 0
+                ? `<div style="font-size:13px;color:var(--sub);padding:6px 0">본인만 참여 — 이체 없음</div>`
+                : debtors.map(uid => {
+                    const u = allUsers[uid] || {};
+                    const isMe = uid === currentUser.uid;
+                    return `
+                    <div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #F9F9F9;font-size:13px;flex-wrap:wrap">
+                      <span style="font-weight:700${isMe?';color:#DC2626':''}">${isMe?'나 ('+esc(u.nick||uid)+')':esc(u.nick||uid)}</span>
+                      <span style="color:var(--sub)">→</span>
+                      <span style="font-weight:700;color:#16A34A">${esc(payerUser.nick||payer)}</span>
+                      <span style="font-weight:800;margin-left:auto">${won(share)}</span>
+                    </div>`;
+                  }).join('')}
+              ${payerUser.bankName||payerUser.accountNum ? `
+                <div style="margin-top:8px;background:#F0FDF4;border-radius:8px;padding:8px 10px;font-size:12px">
+                  🏦 <strong>${esc(payerUser.bankName||'')}</strong>
+                  ${payerUser.accountNum?`<span style="font-family:monospace;letter-spacing:1px"> ${esc(payerUser.accountNum)}</span>`:''}
+                  ${payerUser.accountHolder?`· <strong>${esc(payerUser.accountHolder)}</strong>`:''}
+                </div>`
+              : `<div style="font-size:11px;color:#CCC;margin-top:8px">결제자 계좌 정보 없음 (마이페이지에서 등록)</div>`}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
       ${(() => {
         const remaining = transactions.filter(t => !completedMap[`${t.from}_${t.to}`]);
         const completed = transactions.filter(t => completedMap[`${t.from}_${t.to}`]);
@@ -1010,8 +1065,8 @@ async function loadExpenses(tripId) {
         <div class="final-settle-card">
           <div class="final-settle-header" style="display:flex;justify-content:space-between;align-items:flex-start">
             <div>
-              <div style="font-weight:800;font-size:16px;margin-bottom:2px">💸 최종 정산</div>
-              <div style="font-size:12px;opacity:0.85">완료 버튼을 누르면 정산 완료 처리됩니다</div>
+              <div style="font-weight:800;font-size:16px;margin-bottom:2px">💸 최종 정산 요약</div>
+              <div style="font-size:12px;opacity:0.85">상계 후 최소 이체 — 완료 버튼으로 처리</div>
             </div>
             <div style="text-align:right">
               ${completedAmt>0?`<div style="font-size:11px;opacity:0.8">완료 ${won(completedAmt)}</div>`:''}
@@ -1026,10 +1081,10 @@ async function loadExpenses(tripId) {
                 <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">미완료 (${remaining.length}건)</div>
                 ${remaining.map(t => {
                   const toUser = allUsers[t.to]||{};
-                  const key = `${t.from}_${t.to}`;
-                  const canComplete = t.from===currentUser.uid || t.to===currentUser.uid || currentUserDoc.isAdmin;
+                  const isMyTxn = t.from===currentUser.uid || t.to===currentUser.uid;
+                  const canComplete = isMyTxn || currentUserDoc.isAdmin;
                   return `
-                  <div class="transfer-row">
+                  <div class="transfer-row${isMyTxn?' my-txn':''}">
                     <span class="transfer-from">${esc(allUsers[t.from]?.nick||t.from)}</span>
                     <span style="color:var(--sub);font-size:18px">→</span>
                     <span class="transfer-to">${esc(toUser.nick||t.to)}</span>
@@ -1063,56 +1118,15 @@ async function loadExpenses(tripId) {
               `}
           </div>
         </div>`;
-      })()}
-
-      <div class="card">
-        <div style="font-weight:800;font-size:15px;margin-bottom:12px">👤 인원별 상세 내역</div>
-        ${Object.keys(personDetail).length===0
-          ? '<div class="card-sub">내역 없음</div>'
-          : Object.entries(personDetail).map(([uid,items])=>{
-              const isMe = uid===currentUser.uid;
-              const myBal = Math.round(balance[uid]||0);
-              const balLabel = myBal>50
-                ? `<span style="color:#16A34A;font-weight:700">+${won(myBal)} 받을 돈</span>`
-                : myBal<-50
-                ? `<span style="color:#DC2626;font-weight:700">${won(myBal)} 낼 돈</span>`
-                : `<span style="color:var(--sub);font-size:12px">정산 완료</span>`;
-              return `
-              <div class="settle-person-card">
-                <div class="settle-person-header" onclick="toggleSettleDetail('${uid}')">
-                  <div>
-                    ${isMe?`<span style="font-weight:800">나 (${esc(allUsers[uid]?.nick||uid)})</span> <span class="badge b-or" style="font-size:10px">나</span>`
-                         :`<span style="font-weight:700">${esc(allUsers[uid]?.nick||uid)}</span>`}
-                  </div>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    ${balLabel}
-                    <span style="color:var(--sub);font-size:12px">▾</span>
-                  </div>
-                </div>
-                <div class="settle-person-detail" id="settle-detail-${uid}">
-                  ${items.map(i=>`
-                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px solid #F9F9F9">
-                      <div>
-                        <span style="font-size:11px;background:#F0F0F0;border-radius:4px;padding:1px 5px;margin-right:4px">${esc(i.cat)}</span>
-                        ${esc(i.title)}
-                        <span style="color:var(--sub);font-size:11px"> (결제: ${esc(allUsers[i.payer]?.nick||i.payer)})</span>
-                      </div>
-                      <span style="font-weight:700;color:#DC2626;margin-left:8px;white-space:nowrap">-${won(i.share)}</span>
-                    </div>`).join('')}
-                  <div style="display:flex;justify-content:flex-end;padding-top:6px;font-size:13px">
-                    내 부담 합계: <strong style="margin-left:6px">${won(items.reduce((s,i)=>s+i.share,0))}</strong>
-                  </div>
-                </div>
-              </div>`;
-            }).join('')}
-      </div>`;
+      })()}`;
   } catch(e) { expList.innerHTML=`<div class="card"><div class="card-sub">오류: ${e.message}</div></div>`; }
 }
 
 const CATEGORIES = ['🍽️ 식대','🏨 숙소비','🎢 이용료','🚗 교통비','🛒 기타'];
 
 window.openExpenseModal = () => {
-  const userList = Object.entries(allUsers);
+  const base = Object.keys(currentTripAttendees).length > 0 ? currentTripAttendees : allUsers;
+  const userList = Object.entries(base);
   const userOpts = userList.map(([uid,u]) => `
     <label style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F5F5F5;cursor:pointer">
       <input type="checkbox" class="exp-chk" value="${uid}" checked>
@@ -1533,6 +1547,11 @@ async function renderAdminMembers() {
 window.toggleSettleDetail = (uid) => {
   const el = document.getElementById('settle-detail-'+uid);
   if (el) el.classList.toggle('open');
+};
+window.toggleExpenseSettle = (id) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
 };
 
 window.toggleAdmin=async(uid,isAdmin)=>{ if(!confirm(isAdmin?'관리자를 해제하시겠습니까?':'관리자로 승격하시겠습니까?')) return; await updateDoc(doc(db,'users',uid),{isAdmin:!isAdmin}); allUsers[uid]={...allUsers[uid],isAdmin:!isAdmin}; renderAdminMembers(); };
