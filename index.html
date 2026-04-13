@@ -1021,7 +1021,7 @@ async function loadExpenses(tripId) {
                 <span style="color:var(--sub);font-size:12px">▾</span>
               </div>
             </div>
-            <div id="exp-settle-${idx}" style="display:none;padding:0 12px 12px">
+            <div id="exp-settle-${idx}" style="display:block;padding:0 12px 12px">
               <div style="font-size:12px;color:var(--sub);margin-bottom:8px;padding-top:4px">
                 결제자: <strong style="color:var(--primary)">${esc(payerUser.nick||payer)}</strong> · 1인 부담 ${won(share)}
               </div>
