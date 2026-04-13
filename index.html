@@ -934,7 +934,7 @@ async function loadExpenses(tripId) {
       <div class="card" style="margin-bottom:10px">
         <div style="font-weight:800;margin-bottom:10px;font-size:15px">${esc(cat)}</div>
         ${items.map(e => {
-          const share = Math.ceil(e.amount / (e.participants?.length||1));
+          const share = Math.floor(e.amount / (e.participants?.length||1) / 10) * 10;
           const catKey = cat.replace(/[^가-힣]/g,'').trim();
           return `
           <div class="exp-row">
@@ -956,18 +956,22 @@ async function loadExpenses(tripId) {
       </div>`).join('');
 
     // ── 순잔액(net balance) 계산 ──
+    // 결제자와 비결제 참여자를 분리해 잔액이 정확히 0이 되도록 계산
     // 양수 = 받아야 할 돈, 음수 = 내야 할 돈
     const balance = {};
-    const personDetail = {}; // uid → [{title, cat, amount, paidBy, share}]
+    const personDetail = {}; // uid → [{title, cat, share, payer}]
     expenses.forEach(e => {
       if (!e.participants?.length) return;
       const payer = e.paidBy || e.addedBy;
-      const share = Math.round(e.amount / e.participants.length);
+      const n = e.participants.length;
       const cat = e.category || '🛒 기타';
-      // 결제자는 전액 냈으므로 +amount
-      balance[payer] = (balance[payer]||0) + e.amount;
-      // 참여자는 각자 share만큼 -
-      e.participants.forEach(uid => {
+      // 비결제 참여자만 추출
+      const nonPayers = e.participants.filter(uid => uid !== payer);
+      if (!nonPayers.length) return; // 결제자만 있는 경우 정산 없음
+      const share = Math.floor(e.amount / n / 10) * 10; // 1인당 부담, 10원 미만 절삭
+      // 결제자는 비결제자들로부터 각자 share씩 받음 → 정확히 balance = 0
+      balance[payer] = (balance[payer]||0) + share * nonPayers.length;
+      nonPayers.forEach(uid => {
         balance[uid] = (balance[uid]||0) - share;
         if (!personDetail[uid]) personDetail[uid] = [];
         personDetail[uid].push({ title:e.title, cat, share, payer });
@@ -1013,7 +1017,7 @@ async function loadExpenses(tripId) {
         ${expenses.map((e, idx) => {
           const payer = e.paidBy || e.addedBy;
           const payerUser = allUsers[payer] || {};
-          const share = Math.round(e.amount / (e.participants?.length || 1));
+          const share = Math.floor(e.amount / (e.participants?.length || 1) / 10) * 10;
           const debtors = (e.participants || []).filter(uid => uid !== payer);
           return `
           <div style="border:1px solid #F0F0F0;border-radius:10px;margin-bottom:8px;overflow:hidden">
